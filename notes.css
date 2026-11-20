@@ -1,0 +1,239 @@
+/* Éditeur de note à gauche, Post gallery (ou les brouillons) à droite */
+/* Largeurs : l'éditeur et sa colonne, puis le planning qui déborde à droite */
+html.snw-split {
+  --snw-dialog-w: min(1200px, calc(100vw - 380px));
+  --snw-planning-w: 300px;
+  --snw-gap: 16px;
+}
+
+html.snw-split [role="dialog"][class*="composerModal-"] {
+  width: var(--snw-dialog-w) !important;
+  max-width: none !important;
+  left: calc((100vw - var(--snw-dialog-w) - var(--snw-planning-w) - var(--snw-gap)) / 2) !important;
+  overflow: visible !important;
+}
+
+html.snw-split [role="dialog"][class*="composerModal-"] [class*="pager-"] {
+  height: min(640px, 80vh) !important;
+}
+
+html.snw-split [role="dialog"][class*="composerModal-"] [class*="track-"] {
+  height: 100% !important;
+  align-items: stretch !important;
+  transform: none !important;
+}
+
+html.snw-split [role="dialog"][class*="composerModal-"] [class*="track-"] > [class*="view-"] {
+  display: none !important;
+  width: 50% !important;
+  height: 100% !important;
+  margin-left: 0 !important;
+  overflow: auto;
+}
+
+/* L'éditeur reste toujours visible et utilisable */
+html.snw-split [role="dialog"][class*="composerModal-"] [class*="track-"] > [class*="view-"]:first-child {
+  display: flex !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* À droite : le volet que Substack vient d'ouvrir (Post gallery ou Brouillons) */
+html.snw-split [role="dialog"][class*="composerModal-"] [class*="track-"] > [class*="view-"]:not(:first-child)[class*="opacity-100"] {
+  display: flex !important;
+  border-left: 1px solid #e6e6e6;
+}
+
+/* Planning des notes, accroché à droite de la fenêtre de l'éditeur */
+#snw-planning {
+  position: absolute;
+  top: 0;
+  left: calc(100% + var(--snw-gap));
+  width: var(--snw-planning-w);
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  background: #fff;
+  color: #1d1d1b;
+  font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+#snw-planning h2 {
+  margin: 0;
+  padding: 14px 16px 10px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+#snw-planning .snw-next {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 16px 14px;
+  border-bottom: 1px solid #eee;
+}
+
+#snw-planning .snw-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b6760;
+}
+
+#snw-planning .snw-when {
+  font-size: 18px;
+}
+
+#snw-planning button {
+  appearance: none;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#snw-planning button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+#snw-planning .snw-primary {
+  border: 0;
+  background: #ff6719;
+  color: #fff;
+}
+
+#snw-planning .snw-actions {
+  display: flex;
+  gap: 6px;
+}
+
+#snw-planning .snw-actions .snw-primary {
+  flex: 1;
+}
+
+#snw-planning .snw-calendar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  padding: 0;
+  border: 1px solid #ddd;
+  background: #fff;
+  color: #1d1d1b;
+}
+
+#snw-planning .snw-calendar:hover:not(:disabled) {
+  background: #f4f2ee;
+}
+
+#snw-planning .snw-calendar svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+#snw-planning .snw-open-cal {
+  border: 1px solid #ddd;
+  background: #fff;
+  color: #1d1d1b;
+}
+
+#snw-planning .snw-open-cal:hover {
+  background: #f4f2ee;
+}
+
+#snw-planning .snw-msg {
+  margin: 0;
+  font-size: 12px;
+  color: #6b6760;
+}
+
+#snw-planning .snw-msg:empty {
+  display: none;
+}
+
+#snw-planning .snw-days {
+  margin: 0;
+  padding: 4px 0 12px;
+  list-style: none;
+  overflow: auto;
+}
+
+#snw-planning h3 {
+  margin: 10px 16px 4px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+#snw-planning .snw-row {
+  display: flex;
+  gap: 10px;
+  padding: 3px 16px;
+}
+
+#snw-planning .snw-time {
+  flex-shrink: 0;
+  width: 40px;
+  font-variant-numeric: tabular-nums;
+  color: #6b6760;
+}
+
+#snw-planning .snw-text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#snw-planning .snw-free .snw-text {
+  color: #3a7d44;
+  font-weight: 600;
+}
+
+#snw-planning .snw-past {
+  opacity: 0.4;
+}
+
+#snw-planning .snw-extra .snw-time {
+  font-style: italic;
+}
+
+#snw-planning .snw-is-next {
+  background: #fff1e8;
+}
+
+/* Message de confirmation après une programmation */
+#snw-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 2147483647;
+  transform: translateX(-50%);
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: #1d1d1b;
+  color: #f4f2ee;
+  font: 600 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Écran trop étroit : pas de place pour le planning */
+@media (max-width: 1100px) {
+  html.snw-split {
+    --snw-planning-w: 0px;
+    --snw-gap: 0px;
+    --snw-dialog-w: 96vw;
+  }
+  #snw-planning {
+    display: none;
+  }
+}

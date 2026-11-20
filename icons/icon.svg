@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Carré orange arrondi, Z blanc surmonté d'une barre -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ef6d30"/>
+      <stop offset="1" stop-color="#ea5a28"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+  <g fill="#fff">
+    <rect x="32" y="26" width="64" height="9"/>
+    <path d="M32 41 H96 V56 L58 86 H96 V102 H32 V86 L70 56 H32 Z"/>
+  </g>
+</svg>

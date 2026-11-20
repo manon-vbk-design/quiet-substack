@@ -1,0 +1,193 @@
+/* Empêche de scroller le fil caché derrière le panneau */
+html.nfe-active,
+html.nfe-active body {
+  overflow: hidden !important;
+}
+
+/* Le panneau couvre le fil mais laisse visibles la barre latérale de Substack
+   et la colonne de droite (recherche, Abonnements, Recommandé pour vous). */
+#nfe-overlay {
+  position: fixed;
+  inset: 0 var(--nfe-right, 0px) 0 var(--nfe-left, 0px);
+  z-index: 2147483646;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f4f2ee;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+#nfe-overlay .nfe-card {
+  width: 100%;
+  max-width: 640px;
+  padding: 40px 32px;
+  text-align: center;
+}
+
+#nfe-overlay .nfe-quote {
+  margin: 0 0 28px;
+  font-size: 26px;
+  line-height: 1.35;
+  font-weight: 600;
+  color: #1d1d1b;
+}
+
+#nfe-overlay .nfe-write {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: 320px;
+  margin: 0 auto;
+  padding: 32px 16px;
+  border-radius: 16px;
+  background: #fff;
+  color: #1d1d1b;
+  font-size: 18px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+#nfe-overlay .nfe-write:hover {
+  background: #1d1d1b;
+  color: #f4f2ee;
+}
+
+#nfe-overlay .nfe-icon {
+  width: 36px;
+  height: 36px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+
+/* Éditeur de note ouvert depuis le panneau : le fil reste caché derrière */
+html.nfe-writing,
+html.nfe-writing body {
+  overflow: hidden !important;
+  background: #f4f2ee !important;
+}
+
+html.nfe-writing #entry {
+  visibility: hidden !important;
+}
+
+/* Menus de Substack (ex. « Créer ») : au-dessus du panneau */
+html.nfe-active [data-radix-popper-content-wrapper] {
+  z-index: 2147483647 !important;
+}
+
+/* Interrupteur « Fil masqué / Fil visible », à droite du logo Substack */
+/* La rangée du logo est en colonne chez Substack : on la met en ligne */
+:has(> #nfe-toggle) {
+  flex-direction: row !important;
+  align-items: center !important;
+}
+
+#nfe-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+  padding: 6px 10px 6px 6px;
+  border-radius: 999px;
+  color: var(--color-fg-primary, #1d1d1b);
+  font: 600 13px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+
+#nfe-toggle:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+#nfe-toggle input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  margin: 0;
+  opacity: 0;
+}
+
+#nfe-toggle .nfe-track {
+  position: relative;
+  flex-shrink: 0;
+  width: 34px;
+  height: 20px;
+  border-radius: 999px;
+  background: #ccc6bb;
+  transition: background 0.15s;
+}
+
+#nfe-toggle .nfe-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s;
+}
+
+#nfe-toggle input:checked + .nfe-track {
+  background: #ff6719;
+}
+
+#nfe-toggle input:checked + .nfe-track::after {
+  transform: translateX(14px);
+}
+
+#nfe-toggle input:focus-visible + .nfe-track {
+  outline: 2px solid #ff6719;
+  outline-offset: 2px;
+}
+
+/* Logo d'une publication dans son raccourci */
+.nfe-pub-logo {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+/* Avec nos raccourcis, la liste peut dépasser la hauteur de l'écran :
+   elle défile, et « Créer » / « Plus » restent accessibles. */
+:has(> [data-nfe-shortcut]) {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+/* Textes des raccourcis sur une seule ligne, coupés par « … » si besoin */
+[data-nfe-shortcut] .nfe-label {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Barre réduite en icônes (fenêtre étroite) : l'interrupteur passe sous
+   le logo, sans texte (le titre au survol dit son état). */
+html.nfe-compact :has(> #nfe-toggle) {
+  flex-direction: column !important;
+  height: auto !important;
+  gap: 8px;
+}
+
+html.nfe-compact #nfe-toggle {
+  margin: 0;
+  padding: 4px;
+}
+
+html.nfe-compact #nfe-toggle .nfe-toggle-text {
+  display: none;
+}

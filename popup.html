@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 260px;
+      margin: 0;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f4f2ee;
+      color: #1d1d1b;
+    }
+    h1 { font-size: 14px; margin: 0 0 12px; }
+    h2 { font-size: 12px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: .04em; color: #6b6760; }
+    p { font-size: 12px; margin: 0 0 10px; color: #6b6760; }
+    hr { border: 0; border-top: 1px solid #ddd8cf; margin: 14px 0 12px; }
+
+    /* Interrupteur « Masquer le fil » */
+    .switch { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 4px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .switch input { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; }
+    .switch .track { position: relative; flex-shrink: 0; width: 36px; height: 20px; border-radius: 999px; background: #ccc6bb; transition: background .15s; }
+    .switch .track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .15s; }
+    .switch input:checked + .track { background: #ff6719; }
+    .switch input:checked + .track::after { transform: translateX(16px); }
+    .switch input:focus-visible + .track { outline: 2px solid #1d1d1b; outline-offset: 2px; }
+    .hint { display: block; color: #6b6760; font-size: 11px; }
+
+    /* Créneaux */
+    .slot { display: flex; align-items: center; font-size: 13px; margin: 0 0 8px; }
+    .slot input {
+      margin-left: auto;
+      padding: 6px 8px;
+      border: 1px solid #ccc6bb;
+      border-radius: 8px;
+      background: #fff;
+      font: inherit;
+      font-size: 13px;
+    }
+    button {
+      display: block;
+      width: 100%;
+      margin-top: 8px;
+      padding: 8px;
+      border: 1px solid #1d1d1b;
+      border-radius: 999px;
+      background: transparent;
+      color: #1d1d1b;
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    button:hover { background: #1d1d1b; color: #f4f2ee; }
+    /* Bouton « × » pour retirer un créneau */
+    button.remove {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      width: 26px;
+      height: 26px;
+      margin: 0 0 0 6px;
+      padding: 0;
+      border: 0;
+      color: #6b6760;
+      font-size: 18px;
+      line-height: 1;
+    }
+    button.remove:hover { background: #ebe7e0; color: #c62828; }
+    button.remove:disabled { visibility: hidden; }
+    /* « + Ajouter un créneau » : discret, en pointillés */
+    #add-slot {
+      margin-top: 0;
+      border: 1px dashed #aaa59c;
+      color: #6b6760;
+    }
+    #add-slot:hover { border-style: solid; background: transparent; color: #1d1d1b; }
+    #saved { font-size: 11px; color: #3a7d44; margin: 6px 0 0; min-height: 14px; }
+  </style>
+</head>
+<body>
+  <h1>Quiet Substack</h1>
+
+  <label class="switch">Masquer le fil
+    <input id="enabled" type="checkbox" checked>
+    <span class="track"></span>
+  </label>
+  <span class="hint">Aussi en haut à gauche de Substack, à côté du logo.</span>
+
+  <hr>
+
+  <h2>Créneaux des notes</h2>
+  <p>Chaque jour. Le planning à côté de l'éditeur te montre le prochain créneau libre.</p>
+  <div id="slots"></div>
+  <button id="add-slot" type="button">+ Ajouter un créneau</button>
+  <button id="open-calendar" type="button">Ouvrir le calendrier</button>
+
+  <p id="saved"></p>
+  <script src="popup.js"></script>
+</body>
+</html>
