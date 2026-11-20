@@ -45,3 +45,9 @@ Substack changes its pages often, and the extension relies on their layout. If a
 **Installer :** bouton vert **Code** → **Download ZIP**, dézipper, ouvrir `chrome://extensions`, activer le **mode développeur**, cliquer sur **Charger l'extension non empaquetée** et choisir le dossier `quiet-substack-main`. Rafraîchir les onglets Substack.
 
 **Mettre à jour :** retélécharger le ZIP, remplacer l'ancien dossier, cliquer sur la flèche de rechargement de l'extension dans `chrome://extensions`, puis rafraîchir Substack.
+
+---
+
+## License
+
+[GPL-3.0](LICENSE). You can use, modify and share this extension, as long as your modified versions stay open source under the same license.
