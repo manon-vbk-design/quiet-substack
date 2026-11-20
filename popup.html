@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html>
 <head>
   <meta charset="utf-8">
   <style>
@@ -81,21 +81,22 @@
 <body>
   <h1>Quiet Substack</h1>
 
-  <label class="switch">Masquer le fil
+  <label class="switch"><span data-i18n="hideFeed"></span>
     <input id="enabled" type="checkbox" checked>
     <span class="track"></span>
   </label>
-  <span class="hint">Aussi en haut à gauche de Substack, à côté du logo.</span>
+  <span class="hint" data-i18n="hideFeedHint"></span>
 
   <hr>
 
-  <h2>Créneaux des notes</h2>
-  <p>Chaque jour. Le planning à côté de l'éditeur te montre le prochain créneau libre.</p>
+  <h2 data-i18n="slotsTitle"></h2>
+  <p data-i18n="slotsHelp"></p>
   <div id="slots"></div>
-  <button id="add-slot" type="button">+ Ajouter un créneau</button>
-  <button id="open-calendar" type="button">Ouvrir le calendrier</button>
+  <button id="add-slot" type="button" data-i18n="addSlot"></button>
+  <button id="open-calendar" type="button" data-i18n="openCalendarButton"></button>
 
   <p id="saved"></p>
+  <script src="i18n.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 
 Hide the feed, plan your Notes, stay focused on writing. A Chrome extension for Substack creators.
 
-> Not affiliated with Substack. The interface is in French for now.
+> Not affiliated with Substack. Available in English and French: the extension follows your Chrome language.
 
 ![Substack home with the feed hidden, the switch next to the logo and the new sidebar shortcuts](screenshots/feed-hidden.webp)
 

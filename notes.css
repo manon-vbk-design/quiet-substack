@@ -184,6 +184,7 @@ html.snw-split [role="dialog"][class*="composerModal-"] [class*="track-"] > [cla
 #snw-planning .snw-time {
   flex-shrink: 0;
   width: 40px;
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
   color: #6b6760;
 }
@@ -201,6 +202,11 @@ html.snw-split [role="dialog"][class*="composerModal-"] [class*="track-"] > [cla
 
 #snw-planning .snw-past {
   opacity: 0.4;
+}
+
+/* En anglais, les heures sont plus longues (« 12:30 PM ») */
+#snw-planning.snw-en .snw-time {
+  width: 60px;
 }
 
 #snw-planning .snw-extra .snw-time {

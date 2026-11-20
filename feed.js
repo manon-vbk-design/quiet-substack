@@ -11,7 +11,7 @@
 const settings = { prenom: "", enabled: true };
 
 function greeting() {
-  return settings.prenom ? `Coucou ${settings.prenom}` : "Coucou 👋";
+  return settings.prenom ? t("greeting", { name: settings.prenom }) : t("greetingNoName");
 }
 
 // Seul le fil d'accueil est masqué (/, /home, /notes). Les articles ouverts
@@ -40,9 +40,9 @@ const CREATE_BUTTON = 'button[aria-label="Créer"], button[aria-label="Create"]'
 
 // Raccourcis ajoutés à la fin de la liste, juste au-dessus du bouton « Créer ».
 const SHORTCUTS = [
-  { id: "write", label: "Écrire une note", icon: "pen" },
-  { id: "calendar", label: "Calendrier", icon: "calendar", href: "https://substack.com/home#calendrier" },
-  { id: "saved", label: "Posts enregistrés", icon: "saved", href: "https://substack.com/saved" },
+  { id: "write", label: t("writeNote"), icon: "pen" },
+  { id: "calendar", label: t("calendar"), icon: "calendar", href: "https://substack.com/home#calendrier" },
+  { id: "saved", label: t("savedPosts"), icon: "saved", href: "https://substack.com/saved" },
 ];
 
 // Tes publications (celles liées à ton profil), lues une fois au chargement :
@@ -60,7 +60,7 @@ async function loadPublications() {
     const primaryId = profile.primaryPublication?.id;
     const primary = profile.primaryPublication?.subdomain;
     myPosts = primary
-      ? [{ id: "posts", label: "Mes posts", icon: "posts", href: `https://${primary}.substack.com/publish/posts/published` }]
+      ? [{ id: "posts", label: t("myPosts"), icon: "posts", href: `https://${primary}.substack.com/publish/posts/published` }]
       : [];
     const seen = new Set();
     publications = (profile.publicationUsers || [])
@@ -158,7 +158,7 @@ function buildShortcut({ id, label, icon, href, logo }, model) {
 function buildToggle() {
   const label = document.createElement("label");
   label.id = "nfe-toggle";
-  label.title = "Masquer ou afficher le fil d'accueil";
+  label.title = t("toggleHelp");
   label.innerHTML = `
     <input type="checkbox">
     <span class="nfe-track" aria-hidden="true"></span>
@@ -172,9 +172,9 @@ function buildToggle() {
 
 function renderToggle(toggle) {
   toggle.querySelector("input").checked = settings.enabled;
-  const state = settings.enabled ? "Fil masqué" : "Fil visible";
+  const state = settings.enabled ? t("feedHidden") : t("feedVisible");
   toggle.querySelector(".nfe-toggle-text").textContent = state;
-  toggle.title = `${state} · cliquer pour ${settings.enabled ? "afficher" : "masquer"} le fil d'accueil`;
+  toggle.title = t(settings.enabled ? "toggleToShow" : "toggleToHide", { state });
 }
 
 // Substack redessine parfois sa barre (et la réduit en icônes quand la
@@ -253,11 +253,12 @@ function buildOverlay() {
       <p class="nfe-quote"></p>
       <a href="#" class="nfe-write">
         <svg class="nfe-icon" viewBox="0 0 24 24" aria-hidden="true">${ICONS.pen}</svg>
-        <span>Écrire / programmer une note</span>
+        <span class="nfe-write-text"></span>
       </a>
     </div>
   `;
   el.querySelector(".nfe-quote").textContent = greeting();
+  el.querySelector(".nfe-write-text").textContent = t("writeOrSchedule");
   el.querySelector(".nfe-write").addEventListener("click", (e) => {
     e.preventDefault();
     openComposer();

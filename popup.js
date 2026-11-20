@@ -1,10 +1,14 @@
 // Popup : interrupteur du fil, créneaux des notes et accès au calendrier.
 // Tout est enregistré dans chrome.storage.local et lu par les scripts de la page.
+// Textes du popup dans la langue de Chrome (voir i18n.js).
+document.documentElement.lang = UI_FR ? "fr" : "en";
+document.querySelectorAll("[data-i18n]").forEach((el) => (el.textContent = t(el.dataset.i18n)));
+
 const savedEl = document.getElementById("saved");
 let savedTimer = null;
 
 function showSaved() {
-  savedEl.textContent = "Enregistré ✓";
+  savedEl.textContent = t("saved");
   clearTimeout(savedTimer);
   savedTimer = setTimeout(() => (savedEl.textContent = ""), 1500);
 }
@@ -44,7 +48,7 @@ function renderSlots() {
   slots.forEach((time, i) => {
     const label = document.createElement("label");
     label.className = "slot";
-    label.append(`Créneau ${i + 1}`);
+    label.append(t("slot", { n: i + 1 }));
 
     const input = document.createElement("input");
     input.type = "time";
@@ -58,7 +62,7 @@ function renderSlots() {
     remove.type = "button";
     remove.className = "remove";
     remove.textContent = "×";
-    remove.title = "Retirer ce créneau";
+    remove.title = t("removeSlot");
     remove.disabled = slots.length === 1; // il faut garder au moins un créneau
     remove.addEventListener("click", () => {
       slots.splice(i, 1);

@@ -148,7 +148,7 @@ async function loadScheduled() {
       .map((draft) => ({ at: new Date(draft.trigger_at), text: draft.body || "" }))
       .sort((a, b) => a.at - b.at);
   } catch {
-    planningMessage = "Impossible de charger tes notes programmées.";
+    planningMessage = t("notesLoadError");
   }
   renderPlanning();
 }
@@ -190,8 +190,9 @@ function nextFreeSlot() {
   return null;
 }
 
-const timeFormat = (date) => date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-const dayFormat = (date) => date.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+// Affichage dans la langue de l'extension (« 08:05 » en français, « 8:05 AM » en anglais).
+const timeFormat = (date) => date.toLocaleTimeString(DATE_LOCALE, { hour: UI_FR ? "2-digit" : "numeric", minute: "2-digit" });
+const dayFormat = (date) => date.toLocaleDateString(DATE_LOCALE, { weekday: "short", day: "numeric", month: "short" });
 
 function excerpt(text) {
   const line = text.split("\n").find((l) => l.trim()) || "";
@@ -205,23 +206,23 @@ function renderPlanning() {
   const now = new Date();
 
   planning.innerHTML = `
-    <h2>Planning des notes</h2>
+    <h2>${t("planningTitle")}</h2>
     <div class="snw-next">
       <span class="snw-label"></span>
       <strong class="snw-when"></strong>
       <div class="snw-actions">
-        <button type="button" class="snw-primary">Programmer et nouvelle note</button>
-        <button type="button" class="snw-calendar" title="Choisir une autre date" aria-label="Choisir une autre date">
+        <button type="button" class="snw-primary">${t("scheduleAndNew")}</button>
+        <button type="button" class="snw-calendar" title="${t("pickOtherDate")}" aria-label="${t("pickOtherDate")}">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
         </button>
       </div>
-      <button type="button" class="snw-open-cal">Voir le calendrier</button>
+      <button type="button" class="snw-open-cal">${t("openCalendar")}</button>
       <p class="snw-msg"></p>
     </div>
     <ol class="snw-days"></ol>
   `;
-  planning.querySelector(".snw-label").textContent = chosen ? "Créneau choisi dans le calendrier" : "Prochain créneau libre";
-  planning.querySelector(".snw-when").textContent = next ? `${dayFormat(next)} · ${timeFormat(next)}` : "Aucun";
+  planning.querySelector(".snw-label").textContent = chosen ? t("chosenSlot") : t("nextFreeSlot");
+  planning.querySelector(".snw-when").textContent = next ? `${dayFormat(next)} · ${timeFormat(next)}` : t("none");
   planning.querySelector(".snw-msg").textContent = planningMessage;
   const primary = planning.querySelector(".snw-primary");
   primary.disabled = !next || busy;
@@ -236,7 +237,7 @@ function renderPlanning() {
   for (let i = 0; i < DAYS_SHOWN; i++) {
     const li = document.createElement("li");
     const title = document.createElement("h3");
-    title.textContent = i === 0 ? `Aujourd'hui · ${dayFormat(day)}` : dayFormat(day);
+    title.textContent = i === 0 ? t("todayDay", { day: dayFormat(day) }) : dayFormat(day);
     li.appendChild(title);
     for (const row of dayPlan(day)) {
       const line = document.createElement("div");
@@ -250,7 +251,7 @@ function renderPlanning() {
       time.textContent = timeFormat(row.at);
       const text = document.createElement("span");
       text.className = "snw-text";
-      text.textContent = row.note ? excerpt(row.note.text) : row.at < now ? "—" : "libre";
+      text.textContent = row.note ? excerpt(row.note.text) : row.at < now ? "—" : t("free");
       line.append(time, text);
       li.appendChild(line);
     }
@@ -265,6 +266,7 @@ function attachPlanning(dialog) {
   if (planning && dialog.contains(planning)) return;
   planning = document.createElement("aside");
   planning.id = "snw-planning";
+  planning.classList.toggle("snw-en", !UI_FR);
   dialog.appendChild(planning);
   planningMessage = "";
   renderPlanning();
@@ -304,61 +306,64 @@ async function scheduleAt(date) {
   if (!dialog || !date || busy) return;
   const view = views(dialog)[0];
   if (submitButton(view)?.disabled) {
-    showMessage("Écris ta note d'abord 🙂");
+    showMessage(t("writeFirst"));
     return;
   }
 
   busy = true;
-  showMessage("Programmation…");
+  showMessage(t("scheduling"));
   try {
     // 1. Ouvre le calendrier de Substack (ou « Modifier » s'il y a déjà une date).
     const opener = calendarOpener(view);
-    if (!opener) throw new Error("bouton calendrier introuvable");
+    if (!opener) throw new Error(t("errCalendarButton"));
     opener.click();
     const picker = await waitFor(() =>
       [...document.querySelectorAll('[role="dialog"]')].find((d) => d !== dialog && d.querySelector('input[type="time"]'))
     );
-    if (!picker) throw new Error("calendrier introuvable");
+    if (!picker) throw new Error(t("errPicker"));
 
-    // 2. Choisit le jour, en passant au mois suivant si besoin.
-    const label = date.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    // 2. Choisit le jour, en passant au mois suivant si besoin. Le nom des jours
+    // suit la langue de Substack (« lundi 26 octobre 2026 » ou « Monday, October 26, 2026 »).
+    const dayOptions = { weekday: "long", day: "numeric", month: "long", year: "numeric" };
+    const labels = ["fr-FR", "en-US", "en-GB"].map((locale) => date.toLocaleDateString(locale, dayOptions));
+    // Substack programme jusqu'à 90 jours : jusqu'à 3 mois après le mois affiché.
     let dayButton = null;
-    for (let i = 0; i < 3 && !dayButton; i++) {
-      dayButton = [...picker.querySelectorAll("button[aria-label]")].find((b) => b.getAttribute("aria-label").includes(label));
-      if (!dayButton) {
+    for (let i = 0; i < 4 && !dayButton; i++) {
+      dayButton = [...picker.querySelectorAll("button[aria-label]")].find((b) => labels.some((label) => b.getAttribute("aria-label").includes(label)));
+      if (!dayButton && i < 3) {
         picker.querySelector('button[aria-label="Le mois prochain"], button[aria-label="Next month"]')?.click();
         await sleep(80);
       }
     }
-    if (!dayButton) throw new Error("jour introuvable");
+    if (!dayButton) throw new Error(t("errDay"));
     dayButton.click();
     await sleep(50);
 
     // 3. Règle l'heure, puis enregistre.
     const timeInput = picker.querySelector('input[type="time"]');
     const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set;
-    setValue.call(timeInput, timeFormat(date));
+    setValue.call(timeInput, hhmm(date));
     timeInput.dispatchEvent(new Event("input", { bubbles: true }));
     timeInput.dispatchEvent(new Event("change", { bubbles: true }));
     await sleep(50);
     buttonByText(picker, "Enregistrer", "Save")?.click();
-    if (!(await waitFor(() => !picker.isConnected, 2000))) throw new Error("calendrier resté ouvert");
+    if (!(await waitFor(() => !picker.isConnected, 2000))) throw new Error(t("errPickerOpen"));
 
     // 4. Programme la note (dès que le bouton affiche « Programme »), puis en ouvre une nouvelle.
     const submit = await waitFor(() => {
       const button = submitButton(views(dialog)[0]);
       return button && /Programme|Schedule/.test(button.innerText) && !button.disabled && button;
     }, 2000);
-    if (!submit) throw new Error("date non prise en compte");
+    if (!submit) throw new Error(t("errDate"));
     submit.click();
     if (!(await waitFor(() => !document.querySelector(COMPOSER_DIALOG), 8000))) {
-      throw new Error("la note n'a pas été programmée");
+      throw new Error(t("errNotScheduled"));
     }
     chosenSlot = null;
-    const done = `Note programmée pour ${dayFormat(date)} · ${timeFormat(date)} ✓`;
-    toast((await reopenComposer()) ? done : `${done} Clique sur « Écrire une note » pour la suivante.`);
+    const done = t("scheduledFor", { when: `${dayFormat(date)} · ${timeFormat(date)}` });
+    toast((await reopenComposer()) ? done : t("clickForNext", { done }));
   } catch (error) {
-    showMessage(`Oups, ça n'a pas marché (${error.message}). Programme-la avec l'icône calendrier.`);
+    showMessage(t("scheduleFailed", { error: error.message }));
   } finally {
     busy = false;
     renderPlanning();

@@ -64,23 +64,23 @@ async function loadPosts() {
     cal.posts = (result?.posts || []).map((post) => ({
       id: post.id,
       at: new Date(post.trigger_at),
-      title: post.title || "Sans titre",
+      title: post.title || t("untitled"),
       url: `https://${host}/publish/post/${post.id}`,
     }));
   } catch {
     cal.posts = [];
-    cal.postsError = "Impossible de charger les posts programmés.";
+    cal.postsError = t("postsLoadError");
   }
 }
 
 async function loadCalendar() {
-  cal.message = "Chargement…";
+  cal.message = t("loading");
   renderCalendar();
   try {
     await Promise.all([loadNotes(), loadPosts()]);
     cal.message = "";
   } catch {
-    cal.message = "Impossible de charger tes notes programmées.";
+    cal.message = t("notesLoadError");
   }
   renderCalendar();
 }
@@ -102,7 +102,7 @@ async function rescheduleNote(note, date) {
   });
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
-    throw new Error(data.error || `erreur ${response.status}`);
+    throw new Error(data.error || t("httpError", { status: response.status }));
   }
   note.at = date;
   note.draft = { ...draft, trigger_at: date.toISOString() };
@@ -111,7 +111,7 @@ async function rescheduleNote(note, date) {
 // Supprime définitivement la note (même requête que le bouton de Substack).
 async function deleteNote(note) {
   const response = await fetch(`/api/v1/comment/${note.id}`, { method: "DELETE", credentials: "include" });
-  if (!response.ok) throw new Error(`erreur ${response.status}`);
+  if (!response.ok) throw new Error(t("httpError", { status: response.status }));
   cal.notes = cal.notes.filter((n) => n !== note);
 }
 
@@ -132,8 +132,8 @@ function atTime(day, time) {
 }
 
 const calSameDay = (a, b) => a.toDateString() === b.toDateString();
-const calTime = (date) => date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-const calDay = (date) => date.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+const calTime = (date) => date.toLocaleTimeString(DATE_LOCALE, { hour: UI_FR ? "2-digit" : "numeric", minute: "2-digit" });
+const calDay = (date) => date.toLocaleDateString(DATE_LOCALE, { weekday: "short", day: "numeric", month: "short" });
 
 // Chaque créneau du jour avec la note qui l'occupe, plus les notes hors créneau.
 function calDayRows(day) {
@@ -158,7 +158,7 @@ async function dropOn(row) {
   dragged = null;
   if (!note || cal.saving || row.note === note) return;
   if (row.at < new Date()) {
-    flash("Ce créneau est déjà passé.");
+    flash(t("slotPast"));
     return;
   }
 
@@ -166,13 +166,13 @@ async function dropOn(row) {
   const other = row.note;
   const from = note.at;
   cal.saving = true;
-  flash("Reprogrammation…");
+  flash(t("rescheduling"));
   try {
     await rescheduleNote(note, row.at);
     if (other) await rescheduleNote(other, from);
-    flash(other ? "Notes échangées ✓" : `Note déplacée au ${calDay(row.at)} · ${calTime(row.at)} ✓`);
+    flash(other ? t("swapped") : t("moved", { when: `${calDay(row.at)} · ${calTime(row.at)}` }));
   } catch (error) {
-    flash(`Oups, ça n'a pas marché (${error.message}).`);
+    flash(t("oops", { error: error.message }));
     await loadNotes().catch(() => {});
   } finally {
     cal.saving = false;
@@ -209,17 +209,17 @@ function composeAt(date) {
 
 async function moveNoteTo(note, date) {
   if (!(date > new Date())) {
-    flash("Choisis une date à venir.");
+    flash(t("pickFuture"));
     return;
   }
   cal.saving = true;
-  flash("Reprogrammation…");
+  flash(t("rescheduling"));
   try {
     await rescheduleNote(note, date);
     cal.editing = null;
-    flash(`Note reprogrammée au ${calDay(date)} · ${calTime(date)} ✓`);
+    flash(t("rescheduled", { when: `${calDay(date)} · ${calTime(date)}` }));
   } catch (error) {
-    flash(`Oups, ça n'a pas marché (${error.message}).`);
+    flash(t("oops", { error: error.message }));
   } finally {
     cal.saving = false;
     renderCalendar();
@@ -229,13 +229,13 @@ async function moveNoteTo(note, date) {
 
 async function removeNote(note) {
   cal.saving = true;
-  flash("Suppression…");
+  flash(t("deleting"));
   try {
     await deleteNote(note);
     cal.editing = null;
-    flash("Note supprimée ✓");
+    flash(t("deleted"));
   } catch (error) {
-    flash(`Oups, ça n'a pas marché (${error.message}).`);
+    flash(t("oops", { error: error.message }));
   } finally {
     cal.saving = false;
     renderCalendar();
@@ -257,12 +257,12 @@ function moveForm(note) {
   form.className = "snc-form";
   const today = new Date();
   form.innerHTML = `
-    <label>Jour <input type="date" name="day" required></label>
-    <label>Heure <input type="time" name="time" required></label>
+    <label>${t("day")} <input type="date" name="day" required></label>
+    <label>${t("time")} <input type="time" name="time" required></label>
     <div class="snc-form-slots"></div>
     <div class="snc-form-actions">
-      <button type="submit" class="snc-primary">Reprogrammer</button>
-      <button type="button" class="snc-cancel">Annuler</button>
+      <button type="submit" class="snc-primary">${t("reschedule")}</button>
+      <button type="button" class="snc-cancel">${t("cancel")}</button>
     </div>
   `;
   const day = form.elements.day;
@@ -270,7 +270,7 @@ function moveForm(note) {
   day.min = dateValue(today);
   day.max = dateValue(addDays(today, CAL_MAX_DAYS_AHEAD));
   day.value = dateValue(note.at);
-  time.value = calTime(note.at);
+  time.value = hhmm(note.at);
   const slotsEl = form.querySelector(".snc-form-slots");
   for (const slot of cal.slots) {
     const chip = document.createElement("button");
@@ -293,10 +293,10 @@ function deleteConfirm(note) {
   const box = document.createElement("div");
   box.className = "snc-form";
   box.innerHTML = `
-    <p class="snc-warn">Supprimer définitivement cette note ?</p>
+    <p class="snc-warn">${t("deleteConfirm")}</p>
     <div class="snc-form-actions">
-      <button type="button" class="snc-danger">Supprimer</button>
-      <button type="button" class="snc-cancel">Annuler</button>
+      <button type="button" class="snc-danger">${t("delete")}</button>
+      <button type="button" class="snc-cancel">${t("cancel")}</button>
     </div>
   `;
   box.querySelector(".snc-danger").addEventListener("click", () => removeNote(note));
@@ -324,7 +324,7 @@ function noteCard(note) {
   time.textContent = calTime(note.at);
   const text = document.createElement("span");
   text.className = "snc-card-text";
-  text.textContent = note.text.trim() || "(note sans texte)";
+  text.textContent = note.text.trim() || t("noText");
   card.append(time, text);
   if (note.draft.attachments?.length) {
     const clip = document.createElement("span");
@@ -341,9 +341,9 @@ function noteCard(note) {
     const actions = document.createElement("div");
     actions.className = "snc-actions";
     actions.innerHTML = `
-      <a class="snc-act snc-act-edit" title="Ouvrir la note dans l'éditeur de Substack">Modifier</a>
-      <button type="button" class="snc-act snc-act-move" title="Choisir une autre date">Reprogrammer</button>
-      <button type="button" class="snc-act snc-act-delete" title="Supprimer la note">Supprimer</button>
+      <a class="snc-act snc-act-edit" title="${t("editHelp")}">${t("edit")}</a>
+      <button type="button" class="snc-act snc-act-move" title="${t("pickOtherDate")}">${t("reschedule")}</button>
+      <button type="button" class="snc-act snc-act-delete" title="${t("deleteHelp")}">${t("delete")}</button>
     `;
     // L'éditeur de Substack s'ouvre sur un brouillon avec ?action=compose&draftId= dans l'adresse.
     actions.querySelector(".snc-act-edit").href = `https://substack.com/home?action=compose&draftId=${note.id}`;
@@ -370,7 +370,7 @@ function postCard(post) {
   card.href = post.url;
   card.target = "_blank";
   card.rel = "noopener";
-  card.title = `${post.title} — ouvrir dans l'éditeur`;
+  card.title = t("postHelp", { title: post.title });
   const time = document.createElement("span");
   time.className = "snc-card-time";
   time.textContent = `Post · ${calTime(post.at)}`;
@@ -392,10 +392,10 @@ function slotCell(row) {
   } else {
     const empty = document.createElement(past ? "span" : "button");
     empty.className = "snc-empty";
-    empty.textContent = `${calTime(row.at)} · ${past ? "—" : "libre"}`;
+    empty.textContent = `${calTime(row.at)} · ${past ? "—" : t("free")}`;
     if (!past) {
       empty.type = "button";
-      empty.title = "Écrire une nouvelle note pour ce créneau";
+      empty.title = t("writeAtSlot");
       empty.addEventListener("click", () => composeAt(row.at));
     }
     cell.appendChild(empty);
@@ -421,22 +421,22 @@ function renderCalendar() {
   if (!cal.el) return;
   const today = new Date();
   const end = addDays(cal.start, CAL_DAYS - 1);
-  const range = `${cal.start.toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} – ${end.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}`;
+  const range = `${cal.start.toLocaleDateString(DATE_LOCALE, { day: "numeric", month: "long" })} – ${end.toLocaleDateString(DATE_LOCALE, { day: "numeric", month: "long", year: "numeric" })}`;
 
   cal.el.innerHTML = `
-    <div class="snc-panel" role="dialog" aria-label="Calendrier des notes">
+    <div class="snc-panel" role="dialog" aria-label="${t("calendarTitle")}">
       <header class="snc-head">
-        <h2>Calendrier des notes</h2>
+        <h2>${t("calendarTitle")}</h2>
         <div class="snc-nav">
-          <button type="button" class="snc-prev" aria-label="15 jours plus tôt">‹</button>
-          <button type="button" class="snc-today">Aujourd'hui</button>
-          <button type="button" class="snc-next" aria-label="15 jours plus tard">›</button>
+          <button type="button" class="snc-prev" aria-label="${t("earlier")}">‹</button>
+          <button type="button" class="snc-today">${t("today")}</button>
+          <button type="button" class="snc-next" aria-label="${t("later")}">›</button>
           <span class="snc-range"></span>
         </div>
         <p class="snc-msg" aria-live="polite"></p>
-        <button type="button" class="snc-close" aria-label="Fermer">×</button>
+        <button type="button" class="snc-close" aria-label="${t("close")}">×</button>
       </header>
-      <p class="snc-hint">Glisse une note vers un autre créneau pour la reprogrammer (sur un créneau pris, les deux notes échangent leur place), ou passe la souris dessus pour la modifier, la reprogrammer ou la supprimer. Clique sur une case libre pour écrire une nouvelle note à ce créneau. Les posts sont en lecture seule.</p>
+      <p class="snc-hint">${t("calendarHint")}</p>
       <div class="snc-week"></div>
     </div>
   `;
