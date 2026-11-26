@@ -548,6 +548,14 @@ function attachPanelButtons(dialog) {
     group.appendChild(button);
   }
   drafts.parentElement.insertBefore(group, drafts);
+  // Les icônes et « Brouillons » sont posés en haut à droite, hors du flux,
+  // pour que la zone de texte prenne toute la largeur. Les icônes se calent
+  // à gauche de « Brouillons », dont la largeur change selon la langue.
+  drafts.parentElement.classList.add("snw-head-row");
+  drafts.classList.add("snw-drafts");
+  new ResizeObserver(() => {
+    if (drafts.offsetWidth) group.style.right = `${drafts.offsetWidth + 6}px`;
+  }).observe(drafts);
 }
 
 // Ouvre le panneau demandé, passe d'un panneau à l'autre, ou referme si

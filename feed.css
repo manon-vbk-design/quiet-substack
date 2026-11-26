@@ -198,3 +198,37 @@ html.nfe-compact #nfe-toggle {
 html.nfe-compact #nfe-toggle .nfe-toggle-text {
   display: none;
 }
+
+/* ---------- Mode sombre de Substack ---------- */
+
+html.dark-mode #nfe-overlay {
+  background: #1c1d1f;
+}
+
+html.dark-mode #nfe-overlay .nfe-quote {
+  color: #ececec;
+}
+
+html.dark-mode #nfe-overlay .nfe-compose {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: var(--color-bg-secondary, #232525);
+  color: #8a8a8a;
+  box-shadow: none;
+}
+
+html.dark-mode #nfe-overlay .nfe-compose:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+html.dark-mode #nfe-overlay .nfe-avatar {
+  background: #2e2f31;
+}
+
+html.dark-mode.nfe-writing,
+html.dark-mode.nfe-writing body {
+  background: #1c1d1f !important;
+}
+
+html.dark-mode #nfe-toggle:hover {
+  background: rgba(255, 255, 255, 0.07);
+}

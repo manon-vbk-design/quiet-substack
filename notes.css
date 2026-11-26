@@ -82,6 +82,17 @@ html.snw-split.snw-side-open [role="dialog"][class*="composerModal-"] [class*="t
   gap: 8px !important;
 }
 
+/* Icônes un peu plus étroites : sur un écran de ~1250px, « Poster » était coupé */
+html.snw-split.snw-side-open [role="dialog"][class*="composerModal-"] [class*="track-"] > [class*="view-"]:first-child .pc-paddingX-20.pc-paddingBottom-20 .pc-gap-4[class*="flex-grow-"] {
+  gap: 0 !important;
+}
+
+html.snw-split.snw-side-open [role="dialog"][class*="composerModal-"] [class*="track-"] > [class*="view-"]:first-child .pc-paddingX-20.pc-paddingBottom-20 .pc-gap-4[class*="flex-grow-"] button {
+  width: 36px !important;
+  min-width: 36px !important;
+  padding: 0 !important;
+}
+
 /* Rien d'ouvert à droite : l'éditeur garde une largeur normale */
 html.snw-split:not(.snw-side-open) {
   --snw-dialog-w: min(640px, calc(100vw - var(--snw-planning-w) - 3 * var(--snw-gap) - 32px));
@@ -92,6 +103,22 @@ html.snw-split:not(.snw-side-open) [role="dialog"][class*="composerModal-"] [cla
 }
 
 /* Icônes des panneaux, en haut de l'éditeur à gauche de « Brouillons » */
+.snw-head-row {
+  position: relative !important;
+}
+
+.snw-head-row > .snw-drafts {
+  position: absolute !important;
+  top: 0;
+  right: 0;
+}
+
+.snw-head-row > .snw-panels {
+  position: absolute;
+  top: 0;
+  right: 85px;
+}
+
 .snw-panels {
   display: flex;
   flex: none;
