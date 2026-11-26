@@ -4,7 +4,7 @@ Hide the feed, plan your Notes, stay focused on writing. A Chrome extension for 
 
 > Not affiliated with Substack. Available in English and French: the extension follows your Chrome language.
 
-![Substack home with the feed hidden, the switch next to the logo and the new sidebar shortcuts](screenshots/feed-hidden.webp)
+![Substack home with the feed hidden and the switch next to the logo](store/screenshot-1.png)
 
 ## What it does
 
@@ -19,9 +19,13 @@ Hide the feed, plan your Notes, stay focused on writing. A Chrome extension for 
 - **Replies stay simple:** replying to a Note keeps Substack's normal editor.
 - **15-day Notes calendar** to move, edit, reschedule or delete your scheduled Notes.
 
-![Wider Note editor with Post gallery and the daily Notes schedule](screenshots/note-editor.webp)
+![Note editor with the Post gallery and the daily Notes schedule](store/screenshot-2.png)
 
-![15-day Notes calendar](screenshots/notes-calendar.webp)
+![Quote a passage of a post in your Note](store/screenshot-4.png)
+
+![15-day Notes calendar](store/screenshot-3.png)
+
+![Calendar settings with your best hours](store/screenshot-5.png)
 
 Everything stays in your browser: the extension collects and sends no data. See the [privacy policy](PRIVACY.md).
 
