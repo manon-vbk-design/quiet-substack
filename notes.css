@@ -1,8 +1,8 @@
 /* Éditeur de note à gauche, Post gallery (ou les brouillons) à droite */
 /* Largeurs : l'éditeur et sa colonne, puis le planning qui déborde à droite */
 html.snw-split {
-  --snw-dialog-w: min(1200px, calc(100vw - 380px));
-  --snw-planning-w: 300px;
+  --snw-dialog-w: min(1200px, calc(100vw - var(--snw-planning-w) - 3 * var(--snw-gap) - 32px));
+  --snw-planning-w: 260px;
   --snw-gap: 16px;
 }
 
@@ -44,6 +44,93 @@ html.snw-split [role="dialog"][class*="composerModal-"] [class*="track-"] > [cla
   border-left: 1px solid #e6e6e6;
 }
 
+/* Panneau ouvert à droite (« Ajouter à la Note » ou Brouillons) : l'éditeur
+   et le panneau deviennent deux cartes flottantes séparées, comme le planning. */
+html.snw-split.snw-side-open [role="dialog"][class*="composerModal-"] {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+
+html.snw-split.snw-side-open [role="dialog"][class*="composerModal-"] [class*="pager-"] {
+  overflow: visible !important;
+}
+
+html.snw-split.snw-side-open [role="dialog"][class*="composerModal-"] [class*="track-"] {
+  gap: var(--snw-gap, 16px);
+}
+
+html.snw-split.snw-side-open [role="dialog"][class*="composerModal-"] [class*="track-"] > [class*="view-"] {
+  width: calc(50% - var(--snw-gap, 16px) / 2) !important;
+  border-radius: 20px;
+  background: var(--snw-card-bg, var(--color-bg-primary, #fff));
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12), 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+}
+
+html.snw-split.snw-side-open [role="dialog"][class*="composerModal-"] [class*="track-"] > [class*="view-"]:not(:first-child) {
+  border-left: 0 !important;
+}
+
+/* Panneau ouvert : barre d'outils plus serrée pour que « Poster » reste visible */
+html.snw-split.snw-side-open [role="dialog"][class*="composerModal-"] [class*="track-"] > [class*="view-"]:first-child .pc-paddingX-20.pc-paddingBottom-20 {
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+  gap: 8px !important;
+}
+
+html.snw-split.snw-side-open [role="dialog"][class*="composerModal-"] [class*="track-"] > [class*="view-"]:first-child .pc-paddingX-20.pc-paddingBottom-20 > .pc-gap-12 {
+  gap: 8px !important;
+}
+
+/* Rien d'ouvert à droite : l'éditeur garde une largeur normale */
+html.snw-split:not(.snw-side-open) {
+  --snw-dialog-w: min(640px, calc(100vw - var(--snw-planning-w) - 3 * var(--snw-gap) - 32px));
+}
+
+html.snw-split:not(.snw-side-open) [role="dialog"][class*="composerModal-"] [class*="track-"] > [class*="view-"]:first-child {
+  width: 100% !important;
+}
+
+/* Icônes des panneaux, en haut de l'éditeur à gauche de « Brouillons » */
+.snw-panels {
+  display: flex;
+  flex: none;
+  align-self: flex-start;
+  /* Même décalage que « Brouillons » (marge de -6px chez Substack) */
+  margin-top: -6px;
+  align-items: center;
+  gap: 2px;
+}
+
+.snw-panel-button {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.snw-panel-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.snw-panel-button:hover {
+  background: rgba(127, 127, 127, 0.15);
+}
+
+.snw-panel-button[aria-pressed="true"] {
+  background: rgba(255, 103, 25, 0.15);
+  color: #ff6719;
+}
+
 /* Planning des notes, accroché à droite de la fenêtre de l'éditeur */
 #snw-planning {
   position: absolute;
@@ -60,6 +147,55 @@ html.snw-split [role="dialog"][class*="composerModal-"] [class*="track-"] > [cla
   font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
   overflow: hidden;
+  /* La barre de défilement suit le thème de la carte (claire ici, sombre plus bas) */
+  color-scheme: light;
+}
+
+/* ---------- Planning en mode sombre : carte sombre, comme l'éditeur ---------- */
+
+html.dark-mode #snw-planning {
+  color-scheme: dark;
+  background: var(--snw-card-bg, #1c1d1f);
+  color: #ececec;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+html.dark-mode #snw-planning .snw-next,
+html.dark-mode #snw-planning .snw-foot {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+html.dark-mode #snw-planning .snw-label,
+html.dark-mode #snw-planning .snw-msg,
+html.dark-mode #snw-planning .snw-time,
+html.dark-mode #snw-planning .snw-calendar {
+  color: #9a9a9a;
+}
+
+html.dark-mode #snw-planning .snw-open-cal {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: transparent;
+  color: #ececec;
+}
+
+html.dark-mode #snw-planning .snw-open-cal:hover,
+html.dark-mode #snw-planning .snw-pickable:hover,
+html.dark-mode #snw-planning .snw-calendar:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+html.dark-mode #snw-planning .snw-free .snw-text {
+  color: #6cc47a;
+}
+
+html.dark-mode #snw-planning .snw-is-next,
+html.dark-mode #snw-planning .snw-is-next:hover {
+  background: rgba(255, 103, 25, 0.18);
+}
+
+html.dark-mode #snw-planning .snw-is-next .snw-time,
+html.dark-mode #snw-planning .snw-is-next .snw-text {
+  color: #ff8a4c;
 }
 
 #snw-planning h2 {
@@ -90,7 +226,7 @@ html.snw-split [role="dialog"][class*="composerModal-"] [class*="track-"] > [cla
 
 #snw-planning button {
   appearance: none;
-  border-radius: 999px;
+  border-radius: 8px;
   padding: 7px 12px;
   font: inherit;
   font-weight: 600;
@@ -108,24 +244,43 @@ html.snw-split [role="dialog"][class*="composerModal-"] [class*="track-"] > [cla
   color: #fff;
 }
 
-#snw-planning .snw-actions {
+/* La date retenue, avec le crayon pour en choisir une autre */
+#snw-planning .snw-when-row {
   display: flex;
+  align-items: center;
   gap: 6px;
 }
 
-#snw-planning .snw-actions .snw-primary {
-  flex: 1;
+/* En bas, aligné avec « Poster » de l'éditeur */
+#snw-planning .snw-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: auto;
+  padding: 12px 16px 20px;
+  border-top: 1px solid #eee;
+}
+
+#snw-planning .snw-foot .snw-primary {
+  margin-top: 8px;
+}
+
+#snw-planning .snw-foot .snw-primary {
+  width: 100%;
+  min-height: 40px;
 }
 
 #snw-planning .snw-calendar {
   display: flex;
+  flex: none;
   align-items: center;
   justify-content: center;
-  width: 36px;
+  width: 30px;
+  height: 30px;
   padding: 0;
-  border: 1px solid #ddd;
-  background: #fff;
-  color: #1d1d1b;
+  border: 0;
+  background: transparent;
+  color: #6b6760;
 }
 
 #snw-planning .snw-calendar:hover:not(:disabled) {
@@ -133,8 +288,8 @@ html.snw-split [role="dialog"][class*="composerModal-"] [class*="track-"] > [cla
 }
 
 #snw-planning .snw-calendar svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;
@@ -145,6 +300,25 @@ html.snw-split [role="dialog"][class*="composerModal-"] [class*="track-"] > [cla
   border: 1px solid #ddd;
   background: #fff;
   color: #1d1d1b;
+}
+
+/* « Paramétrer mon calendrier » : simple lien sous le bouton orange */
+#snw-planning .snw-setup {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  opacity: 0.7;
+}
+
+#snw-planning .snw-setup:hover {
+  background: none;
+  opacity: 1;
 }
 
 #snw-planning .snw-open-cal:hover {
@@ -162,8 +336,10 @@ html.snw-split [role="dialog"][class*="composerModal-"] [class*="track-"] > [cla
 }
 
 #snw-planning .snw-days {
+  flex: 1;
+  min-height: 0;
   margin: 0;
-  padding: 4px 0 12px;
+  padding: 0 0 12px;
   list-style: none;
   overflow: auto;
 }
@@ -213,8 +389,25 @@ html.snw-split [role="dialog"][class*="composerModal-"] [class*="track-"] > [cla
   font-style: italic;
 }
 
-#snw-planning .snw-is-next {
-  background: #fff1e8;
+#snw-planning .snw-pickable {
+  cursor: pointer;
+}
+
+#snw-planning .snw-pickable:hover {
+  background: #f6f4f0;
+}
+
+/* Le créneau retenu (prochain libre ou choisi d'un clic), surligné en orange */
+#snw-planning .snw-is-next,
+#snw-planning .snw-is-next:hover {
+  background: #ffe6d6;
+  box-shadow: inset 3px 0 0 #ff6719;
+}
+
+#snw-planning .snw-is-next .snw-time,
+#snw-planning .snw-is-next .snw-text {
+  color: #e2560c;
+  font-weight: 700;
 }
 
 /* Message de confirmation après une programmation */
@@ -225,7 +418,7 @@ html.snw-split [role="dialog"][class*="composerModal-"] [class*="track-"] > [cla
   z-index: 2147483647;
   transform: translateX(-50%);
   padding: 10px 18px;
-  border-radius: 999px;
+  border-radius: 8px;
   background: #1d1d1b;
   color: #f4f2ee;
   font: 600 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -234,7 +427,8 @@ html.snw-split [role="dialog"][class*="composerModal-"] [class*="track-"] > [cla
 
 /* Écran trop étroit : pas de place pour le planning */
 @media (max-width: 1100px) {
-  html.snw-split {
+  html.snw-split,
+  html.snw-split:not(.snw-side-open) {
     --snw-planning-w: 0px;
     --snw-gap: 0px;
     --snw-dialog-w: 96vw;
@@ -242,4 +436,394 @@ html.snw-split [role="dialog"][class*="composerModal-"] [class*="track-"] > [cla
   #snw-planning {
     display: none;
   }
+}
+
+/* ---------- Onglet « Notes » de Post gallery ---------- */
+
+/* Notre liste remplace celle de Substack quand l'onglet Notes est choisi */
+#snw-gallery-notes {
+  display: none;
+}
+
+.snw-gn-on #snw-gallery-notes {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: 12px 0 0;
+  overflow-y: auto;
+  font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: inherit;
+}
+
+.snw-gn-on .snw-gn-under {
+  display: none !important;
+}
+
+/* Galerie de notes / Citations : la recherche et les onglets de Substack sont masqués */
+.snw-gn-on .snw-gn-tabsrow {
+  display: none !important;
+}
+
+#snw-gallery-notes .snw-gn-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+#snw-gallery-notes .snw-gn-chip {
+  appearance: none;
+  padding: 6px 14px;
+  border: 1px solid rgba(127, 127, 127, 0.35);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+#snw-gallery-notes .snw-gn-chip[aria-pressed="true"] {
+  border-color: transparent;
+  background: var(--color-fg-primary, #1d1d1b);
+  color: var(--color-bg-primary, #fff);
+}
+
+#snw-gallery-notes .snw-gn-hint,
+#snw-gallery-notes .snw-gn-status {
+  margin: 0 0 8px;
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+#snw-gallery-notes .snw-gn-note {
+  appearance: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 10px 0;
+  border: 0;
+  border-bottom: 1px solid rgba(127, 127, 127, 0.2);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+#snw-gallery-notes .snw-gn-note:hover {
+  background: rgba(127, 127, 127, 0.1);
+}
+
+#snw-gallery-notes .snw-gn-adding {
+  opacity: 0.5;
+}
+
+#snw-gallery-notes .snw-gn-added {
+  background: rgba(255, 103, 25, 0.12);
+}
+
+#snw-gallery-notes .snw-gn-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#snw-gallery-notes .snw-gn-head img {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+#snw-gallery-notes .snw-gn-date {
+  opacity: 0.6;
+}
+
+#snw-gallery-notes .snw-gn-body,
+#snw-gallery-notes .snw-gn-reply {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  white-space: pre-line;
+}
+
+#snw-gallery-notes .snw-gn-reply {
+  -webkit-line-clamp: 1;
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+#snw-gallery-notes .snw-gn-more {
+  appearance: none;
+  align-self: center;
+  margin-top: 10px;
+  padding: 6px 14px;
+  border: 1px solid rgba(127, 127, 127, 0.35);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* ---------- Onglet « Citer » : le post ouvert ---------- */
+
+#snw-gallery-notes .snw-gq-back {
+  appearance: none;
+  align-self: flex-start;
+  padding: 4px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+#snw-gallery-notes .snw-gq-title {
+  margin: 6px 0 4px;
+  font-size: 17px;
+  line-height: 1.3;
+}
+
+#snw-gallery-notes .snw-gq-pub {
+  font-weight: 600;
+}
+
+#snw-gallery-notes .snw-gq-content {
+  flex: 1;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 15px;
+  line-height: 1.55;
+  user-select: text;
+  cursor: text;
+}
+
+#snw-gallery-notes .snw-gq-content p,
+#snw-gallery-notes .snw-gq-content h4 {
+  margin: 0 0 12px;
+}
+
+#snw-gallery-notes .snw-gq-content h4 {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+}
+
+#snw-gallery-notes .snw-gq-content .snw-gq-quote {
+  padding-left: 12px;
+  border-left: 3px solid rgba(127, 127, 127, 0.4);
+}
+
+#snw-gallery-notes .snw-gq-content .snw-gq-item {
+  padding-left: 16px;
+}
+
+#snw-gallery-notes .snw-gq-content .snw-gq-item::before {
+  content: "• ";
+  margin-left: -12px;
+}
+
+#snw-gallery-notes .snw-gq-footer {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 0 -16px 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid rgba(127, 127, 127, 0.25);
+  background: var(--color-bg-primary, #fff);
+}
+
+#snw-gallery-notes .snw-gq-status {
+  flex: 1;
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+#snw-gallery-notes .snw-gq-action {
+  appearance: none;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: #ff6719;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#snw-gallery-notes .snw-gq-action:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ---------- Bas du volet ---------- */
+
+#snw-gallery-notes .snw-gn-main {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Annuler / Ajoutez des posts ne servent qu'aux onglets de Substack */
+.snw-gn-on .snw-gn-their-footer {
+  display: none !important;
+}
+
+/* Le bas du volet : Retour / Citer (post ouvert) */
+.snw-gn-on:has(#snw-gallery-notes) > :has(> #snw-gallery-notes) {
+  padding-bottom: 0 !important;
+}
+/* Post ouvert dans Citer : « Retour » / « Citer ce passage » à la même place */
+#snw-gallery-footer {
+  display: none !important;
+}
+
+.snw-gn-on.snw-gq-reading #snw-gallery-footer {
+  display: flex !important;
+}
+
+/* Le bouton copié garde le style « désactivé » de Substack : on le rallume. */
+#snw-gallery-footer button.snw-gn-primary-on {
+  opacity: 1 !important;
+  cursor: pointer !important;
+}
+
+/* Poster, Ajouter des posts et Citer ce passage en noir (blanc en mode sombre) : l'orange reste
+   réservé à « Programmer et nouvelle note ». */
+button.snw-send:not(:disabled),
+.snw-gn-their-footer button:last-child:not(:disabled),
+#snw-gallery-footer button.snw-gn-primary-on {
+  background: #1f1f1f !important;
+  border-color: #1f1f1f !important;
+  color: #fff !important;
+}
+html.dark-mode button.snw-send:not(:disabled),
+html.dark-mode .snw-gn-their-footer button:last-child:not(:disabled),
+html.dark-mode #snw-gallery-footer button.snw-gn-primary-on {
+  background: #f2f2f2 !important;
+  border-color: #f2f2f2 !important;
+  color: #111 !important;
+}
+
+#snw-gallery-notes .snw-gq-status:empty {
+  display: none;
+}
+
+/* Citations : liste des posts au style de la galerie de posts de Substack */
+#snw-gallery-notes .snw-gq-post {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 0;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+#snw-gallery-notes .snw-gq-post:hover {
+  background: rgba(127, 127, 127, 0.1);
+}
+#snw-gallery-notes .snw-gq-thumb {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: rgba(127, 127, 127, 0.15);
+}
+#snw-gallery-notes .snw-gq-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  line-height: 20px;
+  min-width: 0;
+}
+#snw-gallery-notes .snw-gq-ptitle {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+#snw-gallery-notes .snw-gq-meta {
+  overflow: hidden;
+  font-size: 13px;
+  opacity: 0.6;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Bulle d'aide à côté du titre de Galerie de notes et Citations */
+:has(> [data-snw-title] + .snw-info:not([hidden])) {
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+.snw-info {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-left: 6px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  box-sizing: border-box;
+  font: 700 10px/1 Georgia, serif;
+  opacity: 0.5;
+  cursor: help;
+  vertical-align: middle;
+}
+.snw-info[hidden] {
+  display: none;
+}
+.snw-info:hover,
+.snw-info:focus-visible {
+  opacity: 1;
+  outline: none;
+}
+.snw-info::after {
+  content: attr(data-tip);
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  z-index: 10;
+  width: max-content;
+  max-width: 240px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #1f1f1f;
+  color: #fff;
+  font: 400 12px/17px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  text-align: left;
+  white-space: normal;
+  transform: translateX(-50%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s;
+}
+.snw-info:hover::after,
+.snw-info:focus-visible::after {
+  opacity: 1;
+}
+html.dark-mode .snw-info::after {
+  background: #f2f2f2;
+  color: #111;
 }

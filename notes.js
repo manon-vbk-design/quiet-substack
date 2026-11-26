@@ -1,7 +1,11 @@
-// Éditeur de note : Post gallery et planning
-// Dès que l'éditeur de note s'ouvre, l'élargit en deux colonnes :
-// l'éditeur à gauche, et à droite Post gallery (rouverte automatiquement
-// après chaque ajout) ou la liste des brouillons si tu cliques sur « Brouillons ».
+// Éditeur de note : galeries et planning
+// En haut de l'éditeur, à gauche de « Brouillons », trois icônes ouvrent un
+// panneau flottant à droite de l'éditeur :
+// - Galerie de posts : Post gallery de Substack (« Vos posts » / « Activité ») ;
+// - Galerie de notes : tes notes, likées et répondues, à intégrer (gallery-notes.js) ;
+// - Citations : citer un passage d'un post (gallery-notes.js).
+// Les panneaux sont fermés par défaut ; un second clic sur l'icône referme.
+// « Brouillons » s'ouvre au même endroit.
 // À côté, le planning des créneaux quotidiens avec le prochain créneau libre,
 // et un bouton pour y programmer la note puis en ouvrir une nouvelle.
 
@@ -16,7 +20,6 @@ const DAYS_SHOWN = 7;
 
 let opening = false;
 let busy = false; // programmation en cours : on ne touche pas à la galerie
-let composerIdleSince = 0;
 let galleryMissing = null; // éditeur où l'option galerie est introuvable : on n'insiste pas
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -72,6 +75,13 @@ function press(el) {
   }
 }
 
+// Le menu « ⋯ » est soit un menu classique, soit (version « mobile » que
+// Substack affiche parfois, même sur ordinateur) un panneau glissant du bas.
+const MENU_ITEMS = '[role="menuitem"], [role="dialog"]:not([class*="composerModal-"]) button';
+const openMenu = () =>
+  document.querySelector('[role="menu"]') ||
+  [...document.querySelectorAll('[role="dialog"]:not([class*="composerModal-"])')].find((d) => d.querySelector("button"));
+
 // Ouvre Post gallery via le menu « ⋯ » de l'éditeur, puis rend le focus à l'éditeur.
 async function openGallery(dialog) {
   const more = dialog.querySelector(MORE_BUTTON);
@@ -81,14 +91,14 @@ async function openGallery(dialog) {
   try {
     press(more);
     const item = await waitFor(
-      () => [...document.querySelectorAll('[role="menuitem"]')].find((el) => GALLERY_LABELS.some((label) => el.textContent.includes(label))),
+      () => [...document.querySelectorAll(MENU_ITEMS)].find((el) => GALLERY_LABELS.some((label) => el.textContent.includes(label))),
       1000
     );
     if (!item) {
       // Option absente (Substack a changé son menu) : on referme le menu en
       // recliquant sur « ⋯ » (surtout pas Échap, qui fermerait l'éditeur)
       // et on ne réessaie plus pour cet éditeur, sinon le menu s'ouvre en boucle.
-      if (document.querySelector('[role="menu"]')) press(more);
+      if (openMenu()) press(more);
       galleryMissing = dialog;
       return;
     }
@@ -128,15 +138,21 @@ function chooseSlot(date) {
 }
 let planningMessage = "";
 
-chrome.storage.local.get(["slots"], (data) => {
+// Week-ends masqués (paramètres du calendrier) : pas de créneau samedi et dimanche.
+let showWeekends = true;
+const isWeekend = (day) => day.getDay() === 0 || day.getDay() === 6;
+
+chrome.storage.local.get(["slots", "weekends"], (data) => {
   if (data.slots?.length) slots = data.slots;
+  showWeekends = data.weekends !== false;
+  renderPlanning();
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "local" && changes.slots) {
-    slots = changes.slots.newValue?.length ? changes.slots.newValue : DEFAULT_SLOTS;
-    renderPlanning();
-  }
+  if (area !== "local" || (!changes.slots && !changes.weekends)) return;
+  if (changes.slots) slots = changes.slots.newValue?.length ? changes.slots.newValue : DEFAULT_SLOTS;
+  if (changes.weekends) showWeekends = changes.weekends.newValue !== false;
+  renderPlanning();
 });
 
 async function loadScheduled() {
@@ -169,7 +185,8 @@ function sameDay(a, b) {
 function dayPlan(day) {
   const notes = scheduled.filter((note) => sameDay(note.at, day));
   const used = new Set();
-  const rows = slots.map((time) => {
+  const daySlots = showWeekends || !isWeekend(day) ? slots : [];
+  const rows = daySlots.map((time) => {
     const at = slotDate(day, time);
     const note = notes.find((n) => !used.has(n) && Math.abs(n.at - at) <= 60 * 60 * 1000);
     if (note) used.add(note);
@@ -205,21 +222,27 @@ function renderPlanning() {
   const next = chosen || nextFreeSlot();
   const now = new Date();
 
+  // En haut : le calendrier et ses paramètres. Au milieu : les jours, où un
+  // clic sur un créneau libre le choisit. En bas, aligné avec « Poster » :
+  // le créneau retenu (crayon = autre date) et « Programmer et nouvelle note ».
   planning.innerHTML = `
     <h2>${t("planningTitle")}</h2>
     <div class="snw-next">
-      <span class="snw-label"></span>
-      <strong class="snw-when"></strong>
-      <div class="snw-actions">
-        <button type="button" class="snw-primary">${t("scheduleAndNew")}</button>
-        <button type="button" class="snw-calendar" title="${t("pickOtherDate")}" aria-label="${t("pickOtherDate")}">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>
-        </button>
-      </div>
       <button type="button" class="snw-open-cal">${t("openCalendar")}</button>
+      <button type="button" class="snw-setup">${t("setupCalendar")}</button>
       <p class="snw-msg"></p>
     </div>
     <ol class="snw-days"></ol>
+    <div class="snw-foot">
+      <span class="snw-label"></span>
+      <div class="snw-when-row">
+        <strong class="snw-when"></strong>
+        <button type="button" class="snw-calendar" title="${t("pickOtherDate")}" aria-label="${t("pickOtherDate")}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
+        </button>
+      </div>
+      <button type="button" class="snw-primary">${t("scheduleAndNew")}</button>
+    </div>
   `;
   planning.querySelector(".snw-label").textContent = chosen ? t("chosenSlot") : t("nextFreeSlot");
   planning.querySelector(".snw-when").textContent = next ? `${dayFormat(next)} · ${timeFormat(next)}` : t("none");
@@ -231,10 +254,13 @@ function renderPlanning() {
   calendar.disabled = busy;
   calendar.addEventListener("click", openCalendar);
   planning.querySelector(".snw-open-cal").addEventListener("click", () => openNotesCalendar());
+  planning.querySelector(".snw-setup").addEventListener("click", () => openNotesCalendar("settings"));
 
   const list = planning.querySelector(".snw-days");
   const day = new Date();
-  for (let i = 0; i < DAYS_SHOWN; i++) {
+  for (let i = 0; i < DAYS_SHOWN; i++, day.setDate(day.getDate() + 1)) {
+    // Week-ends masqués : on ne garde un samedi ou un dimanche que s'il a déjà une note.
+    if (!showWeekends && isWeekend(day) && !dayPlan(day).length) continue;
     const li = document.createElement("li");
     const title = document.createElement("h3");
     title.textContent = i === 0 ? t("todayDay", { day: dayFormat(day) }) : dayFormat(day);
@@ -245,6 +271,21 @@ function renderPlanning() {
       line.classList.add(row.note ? "snw-filled" : row.at < now ? "snw-past" : "snw-free");
       if (!row.slot) line.classList.add("snw-extra");
       if (next && row.at.getTime() === next.getTime()) line.classList.add("snw-is-next");
+      // Un créneau libre à venir se choisit d'un clic.
+      if (!row.note && row.at > now && !busy) {
+        line.classList.add("snw-pickable");
+        line.tabIndex = 0;
+        line.setAttribute("role", "button");
+        line.title = t("pickSlotHint");
+        const pick = () => chooseSlot(row.at);
+        line.addEventListener("click", pick);
+        line.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            pick();
+          }
+        });
+      }
 
       const time = document.createElement("span");
       time.className = "snw-time";
@@ -256,7 +297,6 @@ function renderPlanning() {
       li.appendChild(line);
     }
     list.appendChild(li);
-    day.setDate(day.getDate() + 1);
   }
 }
 
@@ -400,10 +440,26 @@ function toast(text) {
 
 // ---------- Boucle principale ----------
 
+// Réponse à une note : la note d'origine est affichée au-dessus de l'éditeur,
+// en lecture seule. Dans ce cas on laisse l'éditeur de Substack tel quel
+// (ni galerie qui se rouvre, ni planning) : tout ça ne sert qu'à tes propres notes.
+// Une note intégrée ou citée, elle, s'affiche sous l'éditeur : on ne regarde
+// donc que les textes en lecture seule placés avant le champ d'écriture.
+function isReply(dialog) {
+  const composer = views(dialog)[0];
+  const editor = composer?.querySelector('.ProseMirror[contenteditable="true"]');
+  if (!editor) return false;
+  return [...composer.querySelectorAll('.ProseMirror:not([contenteditable="true"])')]
+    .some((other) => other.compareDocumentPosition(editor) & Node.DOCUMENT_POSITION_FOLLOWING);
+}
+
 function tick() {
-  const dialog = document.querySelector(COMPOSER_DIALOG);
+  const found = document.querySelector(COMPOSER_DIALOG);
+  const dialog = found && !isReply(found) ? found : null;
   document.documentElement.classList.toggle("snw-split", !!dialog);
   if (!dialog) {
+    document.documentElement.classList.remove("snw-side-open");
+    planning?.remove();
     planning = null;
     // Éditeur refermé sans programmer : on oublie le créneau choisi
     // (après un court délai, le temps que l'éditeur s'ouvre).
@@ -413,19 +469,116 @@ function tick() {
 
   attachPlanning(dialog);
   unlock(dialog);
-  const [composer] = views(dialog);
-  if (!composer || opening || busy || galleryMissing === dialog) return;
-
-  // Rien n'est affiché à droite : on rouvre la galerie presque aussitôt.
-  if (isActive(composer) && !somethingElseOpen()) {
-    if (!composerIdleSince) composerIdleSince = Date.now();
-    if (Date.now() - composerIdleSince > 150) {
-      composerIdleSince = 0;
-      openGallery(dialog);
-    }
-  } else {
-    composerIdleSince = 0;
+  attachPanelButtons(dialog);
+  // Un seul bouton orange à l'écran (« Programmer et nouvelle note ») :
+  // « Poster » passe en noir, comme « Citer ce passage ».
+  submitButton(views(dialog)[0])?.classList.add("snw-send");
+  // Un volet est ouvert à droite (« Ajouter à la Note » ou les brouillons) :
+  // l'éditeur s'élargit en deux colonnes ; sinon il garde une largeur normale.
+  // Le fond de la fenêtre de Substack, gardé pour nos cartes flottantes
+  // (lu une fois, avant qu'on rende la fenêtre transparente).
+  if (!dialog.style.getPropertyValue("--snw-card-bg")) {
+    const bg = getComputedStyle(dialog).backgroundColor;
+    if (bg && !/rgba\(0, 0, 0, 0\)|transparent/.test(bg)) dialog.style.setProperty("--snw-card-bg", bg);
   }
+  const side = sideView(dialog);
+  document.documentElement.classList.toggle("snw-side-open", !!side);
+  const mode = side && isGalleryView(side) ? currentGalleryMode() : null;
+  for (const button of dialog.querySelectorAll("[data-snw-panel]")) {
+    button.setAttribute("aria-pressed", String(button.dataset.snwPanel === mode));
+  }
+}
+
+// ---------- Icônes des panneaux : posts, notes, citations ----------
+
+function sideView(dialog) {
+  return views(dialog).find((view, i) => i > 0 && isActive(view)) || null;
+}
+
+const isGalleryView = (view) => !!view.querySelector('[role="tablist"]');
+
+// Le panneau affiché dans la galerie : "posts", "notes" ou "quote" (gallery-notes.js).
+const currentGalleryMode = () => (typeof gn === "object" && gn.tab) || "posts";
+
+// Icônes Lucide, la bibliothèque qu'utilise Substack : « square-stack » est
+// celle de Galerie de posts dans le menu « ⋯ » de l'éditeur.
+const LUCIDE = (paths) =>
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+
+const PANEL_BUTTONS = [
+  {
+    mode: "posts",
+    label: () => t("panelPosts"),
+    icon: LUCIDE('<path d="M4 10c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2"/><path d="M10 16c-1.1 0-2-.9-2-2v-4c0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2"/><rect width="8" height="8" x="14" y="14" rx="2"/>'),
+  },
+  {
+    mode: "notes",
+    label: () => t("panelNotes"),
+    icon: LUCIDE('<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M13 8H7"/><path d="M17 12H7"/>'),
+  },
+  {
+    mode: "quote",
+    label: () => t("panelQuotes"),
+    icon: LUCIDE('<path d="M16 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"/><path d="M5 3a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2 1 1 0 0 1 1 1v1a2 2 0 0 1-2 2 1 1 0 0 0-1 1v2a1 1 0 0 0 1 1 6 6 0 0 0 6-6V5a2 2 0 0 0-2-2z"/>'),
+  },
+];
+
+function attachPanelButtons(dialog) {
+  const composer = views(dialog)[0];
+  if (!composer || composer.querySelector("[data-snw-panels]")) return;
+  const drafts = buttonByText(composer, "Brouillons", "Drafts");
+  if (!drafts) return;
+  const group = document.createElement("div");
+  group.className = "snw-panels";
+  group.dataset.snwPanels = "";
+  for (const panel of PANEL_BUTTONS) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "snw-panel-button";
+    button.dataset.snwPanel = panel.mode;
+    button.title = panel.label();
+    button.setAttribute("aria-label", panel.label());
+    button.setAttribute("aria-pressed", "false");
+    button.innerHTML = panel.icon;
+    button.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      togglePanel(dialog, panel.mode);
+    });
+    group.appendChild(button);
+  }
+  drafts.parentElement.insertBefore(group, drafts);
+}
+
+// Ouvre le panneau demandé, passe d'un panneau à l'autre, ou referme si
+// c'est celui qui est déjà affiché.
+async function togglePanel(dialog, mode) {
+  if (opening || busy) return;
+  const side = sideView(dialog);
+  const open = side && isGalleryView(side);
+  if (open && currentGalleryMode() === mode) return toggleGallery(dialog);
+  if (!open) {
+    galleryMissing = null;
+    await openGallery(dialog);
+    if (galleryMissing === dialog) return toast(t("galleryMissing"));
+  }
+  gnShow?.(dialog, mode);
+}
+
+async function toggleGallery(dialog) {
+  if (opening || busy) return;
+  const side = sideView(dialog);
+  if (side && isGalleryView(side)) {
+    // Fermer : le bouton « Annuler » en bas du volet de Substack.
+    const cancel = [...side.querySelectorAll("button")]
+      .filter((b) => !b.closest("#snw-gallery-notes, #snw-gallery-footer"))
+      .find((b) => /^(Annuler|Cancel)$/.test(b.textContent.trim()));
+    cancel?.click();
+    return;
+  }
+  galleryMissing = null;
+  await openGallery(dialog);
+  if (galleryMissing === dialog) toast(t("galleryMissing"));
 }
 
 setInterval(tick, 200);

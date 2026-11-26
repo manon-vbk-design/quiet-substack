@@ -1,4 +1,4 @@
-/* Calendrier des notes : 15 jours en plein écran, au-dessus de tout */
+/* Calendrier : 15 jours en plein écran, au-dessus de tout */
 #snc-calendar {
   position: fixed;
   inset: 0;
@@ -10,6 +10,7 @@
   box-sizing: border-box;
   background: rgba(0, 0, 0, 0.45);
   color: #1d1d1b;
+  color-scheme: light;
   font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
@@ -53,7 +54,7 @@
 #snc-calendar button {
   appearance: none;
   border: 1px solid #ddd8cf;
-  border-radius: 999px;
+  border-radius: 8px;
   padding: 4px 12px;
   background: #fff;
   color: #1d1d1b;
@@ -276,7 +277,7 @@
 #snc-calendar .snc-act {
   padding: 2px 8px;
   border: 1px solid #ddd8cf;
-  border-radius: 999px;
+  border-radius: 8px;
   background: #fff;
   color: #1d1d1b;
   font-size: 11px;
@@ -320,7 +321,7 @@
 #snc-calendar .snc-form input {
   padding: 4px 6px;
   border: 1px solid #ccc6bb;
-  border-radius: 6px;
+  border-radius: 8px;
   font: inherit;
   font-size: 12px;
   color: #1d1d1b;
@@ -364,4 +365,288 @@
   #snc-calendar .snc-week {
     grid-template-columns: repeat(5, 170px);
   }
+}
+
+/* ---------- Onglets Calendrier / Paramètres ---------- */
+
+#snc-calendar .snc-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 10px;
+  background: #f1eee8;
+}
+
+#snc-calendar .snc-tabs button {
+  border: 0;
+  background: transparent;
+  color: #6b6760;
+}
+
+#snc-calendar .snc-tabs button[aria-selected="true"] {
+  background: #fff;
+  color: #1d1d1b;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+#snc-calendar .snc-in-settings .snc-nav,
+#snc-calendar .snc-in-settings .snc-hint {
+  display: none;
+}
+
+/* ---------- Paramètres ---------- */
+
+#snc-calendar .snc-settings {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 20px 24px;
+  border-top: 1px solid #eee;
+}
+
+#snc-calendar .snc-settings section {
+  max-width: 460px;
+  padding: 18px 0;
+  border-bottom: 1px solid #eee;
+}
+
+#snc-calendar .snc-settings section:last-child {
+  border-bottom: 0;
+}
+
+#snc-calendar .snc-settings h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+#snc-calendar .snc-help {
+  margin: 0 0 10px;
+  color: #6b6760;
+  font-size: 12px;
+}
+
+#snc-calendar .snc-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#snc-calendar .snc-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: #ff6719;
+}
+
+#snc-calendar .snc-slot-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0;
+}
+
+#snc-calendar .snc-slot-row input {
+  margin-left: auto;
+  padding: 5px 8px;
+  border: 1px solid #ddd8cf;
+  border-radius: 8px;
+  font: inherit;
+}
+
+#snc-calendar .snc-remove-slot {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  color: #6b6760;
+  font-size: 18px;
+  line-height: 1;
+}
+
+#snc-calendar .snc-remove-slot:disabled {
+  visibility: hidden;
+}
+
+#snc-calendar .snc-add-slot {
+  width: 100%;
+  margin-top: 6px;
+  border-style: dashed;
+  color: #6b6760;
+}
+
+/* ---------- Paramètres : « Tes meilleures heures » (best-times.js) ---------- */
+
+#snc-calendar .snw-best-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 13px;
+}
+
+#snc-calendar .snw-best-row small {
+  display: block;
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+#snc-calendar .snw-best-add {
+  flex: none;
+  padding: 3px 8px;
+  border: 1px solid #ff6719;
+  border-radius: 8px;
+  background: transparent;
+  color: #ff6719;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#snc-calendar .snw-best-have {
+  flex: none;
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+#snc-calendar .snw-best-note {
+  margin: 6px 0 0;
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+
+/* ---------- Mode sombre de Substack ---------- */
+
+html.dark-mode #snc-calendar {
+  background: rgba(0, 0, 0, 0.6);
+  color: #ececec;
+  color-scheme: dark;
+}
+html.dark-mode #snc-calendar .snc-panel {
+  background: #1c1d1f;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+}
+html.dark-mode #snc-calendar button,
+html.dark-mode #snc-calendar .snc-act {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: #26272a;
+  color: #ececec;
+}
+html.dark-mode #snc-calendar button:hover,
+html.dark-mode #snc-calendar .snc-act:hover {
+  background: #313236;
+}
+html.dark-mode #snc-calendar .snc-close {
+  background: transparent;
+}
+html.dark-mode #snc-calendar .snc-range,
+html.dark-mode #snc-calendar .snc-hint,
+html.dark-mode #snc-calendar .snc-form label,
+html.dark-mode #snc-calendar .snc-card-attach,
+html.dark-mode #snc-calendar .snc-help,
+html.dark-mode #snc-calendar .snc-remove-slot,
+html.dark-mode #snc-calendar .snc-add-slot {
+  color: #9a9a9a;
+}
+html.dark-mode #snc-calendar .snc-remove-slot {
+  background: transparent;
+}
+html.dark-mode #snc-calendar .snc-hint,
+html.dark-mode #snc-calendar .snc-settings,
+html.dark-mode #snc-calendar .snc-settings section {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+html.dark-mode #snc-calendar .snc-day {
+  border-color: rgba(255, 255, 255, 0.07);
+}
+html.dark-mode #snc-calendar .snc-is-today {
+  background: rgba(255, 103, 25, 0.08);
+}
+html.dark-mode #snc-calendar .snc-is-today h3,
+html.dark-mode #snc-calendar .snc-msg {
+  color: #ff8a4c;
+}
+html.dark-mode #snc-calendar .snc-day-past h3,
+html.dark-mode #snc-calendar .snc-past .snc-empty {
+  color: #6a6a6a;
+}
+html.dark-mode #snc-calendar .snc-slot {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+html.dark-mode #snc-calendar .snc-slot.snc-past {
+  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.02);
+}
+html.dark-mode #snc-calendar .snc-slot.snc-over {
+  border-color: #ff6719;
+  background: rgba(255, 103, 25, 0.14);
+}
+html.dark-mode #snc-calendar .snc-empty {
+  color: #6cc47a;
+}
+html.dark-mode #snc-calendar button.snc-empty {
+  background: transparent;
+}
+html.dark-mode #snc-calendar button.snc-empty:hover {
+  background: rgba(108, 196, 122, 0.1);
+}
+html.dark-mode #snc-calendar .snc-note {
+  background: #2a2b2e;
+}
+html.dark-mode #snc-calendar .snc-note:hover {
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
+}
+html.dark-mode #snc-calendar .snc-post {
+  border-color: rgba(255, 103, 25, 0.35);
+  background: rgba(255, 103, 25, 0.12);
+}
+html.dark-mode #snc-calendar .snc-post:hover {
+  border-color: #ff6719;
+}
+html.dark-mode #snc-calendar .snc-post .snc-card-time {
+  color: #ff8a4c;
+}
+html.dark-mode #snc-calendar .snc-editing {
+  background: #26272a;
+}
+html.dark-mode #snc-calendar .snc-form input,
+html.dark-mode #snc-calendar .snc-slot-row input {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: #26272a;
+  color: #ececec;
+}
+html.dark-mode #snc-calendar .snc-form .snc-primary {
+  border-color: #ff6719;
+  background: #ff6719;
+  color: #fff;
+}
+html.dark-mode #snc-calendar .snc-form .snc-danger {
+  border-color: #c62828;
+  background: #c62828;
+  color: #fff;
+}
+html.dark-mode #snc-calendar .snc-act-delete:hover {
+  border-color: #ef5350;
+  color: #ef5350;
+}
+html.dark-mode #snc-calendar .snc-tabs {
+  background: #26272a;
+}
+html.dark-mode #snc-calendar .snc-tabs button {
+  background: transparent;
+  color: #9a9a9a;
+}
+html.dark-mode #snc-calendar .snc-tabs button[aria-selected="true"] {
+  background: #3a3b3f;
+  color: #ececec;
+  box-shadow: none;
+}
+html.dark-mode #snc-calendar .snw-best-add {
+  border-color: #ff8a4c;
+  background: transparent;
+  color: #ff8a4c;
 }

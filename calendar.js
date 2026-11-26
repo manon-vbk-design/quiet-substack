@@ -7,8 +7,12 @@
 // programmés de ta publication s'affichent aussi, en lecture seule.
 // S'ouvre depuis le planning de l'éditeur, le popup de l'extension, ou toute
 // adresse substack.com se terminant par #calendrier.
+// L'onglet « Paramètres » regroupe tout ce qui touche aux créneaux :
+// week-ends, créneaux quotidiens et meilleures heures (best-times.js).
+// Il s'ouvre directement avec #calendrier-parametres.
 
 const CAL_HASH = "#calendrier";
+const CAL_SETTINGS_HASH = "#calendrier-parametres";
 const CAL_DEFAULT_SLOTS = ["08:00", "12:30", "18:00"];
 const CAL_SLOT_MARGIN = 60 * 60 * 1000; // une note à une heure près occupe le créneau
 const CAL_DAYS = 15;
@@ -24,18 +28,25 @@ const cal = {
   message: "",
   saving: false,
   editing: null, // { id, mode: "move" | "delete" } : carte ouverte sur ses actions
+  view: "week", // "week" ou "settings"
+  weekends: true, // afficher (et proposer) les créneaux du samedi et du dimanche
 };
 
-chrome.storage.local.get(["slots"], (data) => {
+chrome.storage.local.get(["slots", "weekends"], (data) => {
   if (data.slots?.length) cal.slots = data.slots;
+  cal.weekends = data.weekends !== false;
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "local" && changes.slots) {
-    cal.slots = changes.slots.newValue?.length ? changes.slots.newValue : CAL_DEFAULT_SLOTS;
-    renderCalendar();
-  }
+  if (area !== "local" || (!changes.slots && !changes.weekends)) return;
+  if (changes.slots) cal.slots = changes.slots.newValue?.length ? changes.slots.newValue : CAL_DEFAULT_SLOTS;
+  if (changes.weekends) cal.weekends = changes.weekends.newValue !== false;
+  // Pas de nouveau rendu pendant qu'on tape une heure : on perdrait la saisie.
+  if (cal.el?.contains(document.activeElement) && document.activeElement.type === "time") return;
+  renderCalendar();
 });
+
+const calIsWeekend = (day) => day.getDay() === 0 || day.getDay() === 6;
 
 // ---------- Données ----------
 
@@ -427,6 +438,10 @@ function renderCalendar() {
     <div class="snc-panel" role="dialog" aria-label="${t("calendarTitle")}">
       <header class="snc-head">
         <h2>${t("calendarTitle")}</h2>
+        <div class="snc-tabs" role="tablist">
+          <button type="button" role="tab" data-view="week">${t("calTabCalendar")}</button>
+          <button type="button" role="tab" data-view="settings">${t("calTabSettings")}</button>
+        </div>
         <div class="snc-nav">
           <button type="button" class="snc-prev" aria-label="${t("earlier")}">‹</button>
           <button type="button" class="snc-today">${t("today")}</button>
@@ -450,10 +465,27 @@ function renderCalendar() {
   });
   cal.el.querySelector(".snc-close").addEventListener("click", closeNotesCalendar);
   cal.el.querySelector(".snc-panel").classList.toggle("snc-saving", cal.saving);
+  for (const tab of cal.el.querySelectorAll(".snc-tabs button")) {
+    tab.setAttribute("aria-selected", String(tab.dataset.view === cal.view));
+    tab.addEventListener("click", () => {
+      cal.view = tab.dataset.view;
+      cal.editing = null;
+      if (cal.view === "settings" && typeof bt === "object") bt.error = ""; // on réessaie le calcul
+      renderCalendar();
+    });
+  }
+  if (cal.view === "settings") {
+    cal.el.querySelector(".snc-panel").classList.add("snc-in-settings");
+    cal.el.querySelector(".snc-week").replaceWith(calSettings());
+    return;
+  }
 
   const week = cal.el.querySelector(".snc-week");
   for (let i = 0; i < CAL_DAYS; i++) {
     const day = addDays(cal.start, i);
+    // Week-ends masqués : on saute samedi et dimanche, sauf s'il y a déjà quelque chose de programmé.
+    if (!cal.weekends && calIsWeekend(day)
+      && !cal.notes.some((n) => calSameDay(n.at, day)) && !cal.posts.some((p) => calSameDay(p.at, day))) continue;
     const column = document.createElement("section");
     column.className = "snc-day";
     if (calSameDay(day, today)) column.classList.add("snc-is-today");
@@ -465,6 +497,74 @@ function renderCalendar() {
     for (const row of calDayRows(day)) column.appendChild(slotCell(row));
     week.appendChild(column);
   }
+}
+
+// ---------- Paramètres ----------
+
+// Le nouveau créneau arrive une heure après le dernier (sans dépasser 23:00).
+function calNextSlot(slots) {
+  const last = [...slots].sort().pop();
+  if (!last) return "09:00";
+  const [h, m] = last.split(":").map(Number);
+  return `${String(Math.min(h + 1, 23)).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+const calSaveSlots = (slots) => chrome.storage.local.set({ slots: [...new Set(slots.filter(Boolean))].sort() });
+
+function calSettings() {
+  const box = document.createElement("div");
+  box.className = "snc-settings";
+  box.innerHTML = `
+    <section>
+      <h3>${t("weekendsTitle")}</h3>
+      <label class="snc-toggle"><input type="checkbox" class="snc-weekends"><span>${t("showWeekends")}</span></label>
+      <p class="snc-help">${t("weekendsHelp")}</p>
+    </section>
+    <section>
+      <h3>${t("slotsTitle")}</h3>
+      <p class="snc-help">${t("slotsHelp")}</p>
+      <div class="snc-slot-list"></div>
+      <button type="button" class="snc-add-slot">${t("addSlot")}</button>
+    </section>
+    <section>
+      <h3>${t("bestTitle")}</h3>
+      <p class="snc-help">${t("bestHelp")}</p>
+      <div class="snc-best"></div>
+    </section>
+  `;
+  const weekends = box.querySelector(".snc-weekends");
+  weekends.checked = cal.weekends;
+  weekends.addEventListener("change", () => chrome.storage.local.set({ weekends: weekends.checked }));
+
+  const list = box.querySelector(".snc-slot-list");
+  const slots = [...cal.slots].sort();
+  slots.forEach((time, i) => {
+    const row = document.createElement("label");
+    row.className = "snc-slot-row";
+    row.append(t("slot", { n: i + 1 }));
+    const input = document.createElement("input");
+    input.type = "time";
+    input.value = time;
+    input.addEventListener("change", () => {
+      if (!input.value) return;
+      slots[i] = input.value;
+      calSaveSlots(slots);
+    });
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "snc-remove-slot";
+    remove.textContent = "×";
+    remove.title = t("removeSlot");
+    remove.setAttribute("aria-label", t("removeSlot"));
+    remove.disabled = slots.length === 1; // il faut garder au moins un créneau
+    remove.addEventListener("click", () => calSaveSlots(slots.filter((_, j) => j !== i)));
+    row.append(input, remove);
+    list.appendChild(row);
+  });
+  box.querySelector(".snc-add-slot").addEventListener("click", () => calSaveSlots([...slots, calNextSlot(slots)]));
+
+  if (typeof renderBestTimes === "function") renderBestTimes(box.querySelector(".snc-best"), { inline: true });
+  return box;
 }
 
 function startOfDay(date) {
@@ -481,7 +581,7 @@ function shiftDays(days) {
 
 // ---------- Ouverture / fermeture ----------
 
-function openNotesCalendar() {
+function openNotesCalendar(view = "week") {
   if (!cal.el) {
     cal.el = document.createElement("div");
     cal.el.id = "snc-calendar";
@@ -493,6 +593,8 @@ function openNotesCalendar() {
   }
   cal.start = startOfDay(new Date());
   cal.editing = null;
+  cal.view = view;
+  if (typeof bt === "object") bt.error = "";
   loadCalendar();
 }
 
@@ -500,7 +602,9 @@ function closeNotesCalendar() {
   cal.el?.remove();
   cal.el = null;
   document.removeEventListener("keydown", calKeydown, true);
-  if (location.hash === CAL_HASH) history.replaceState(null, "", location.pathname + location.search);
+  if (location.hash === CAL_HASH || location.hash === CAL_SETTINGS_HASH) {
+    history.replaceState(null, "", location.pathname + location.search);
+  }
 }
 
 function calKeydown(e) {
@@ -513,6 +617,7 @@ function calKeydown(e) {
 
 function checkHash() {
   if (location.hash === CAL_HASH && !cal.el) openNotesCalendar();
+  if (location.hash === CAL_SETTINGS_HASH && !cal.el) openNotesCalendar("settings");
 }
 
 window.addEventListener("hashchange", checkHash);

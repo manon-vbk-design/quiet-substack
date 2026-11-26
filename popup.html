@@ -26,24 +26,14 @@
     .switch input:focus-visible + .track { outline: 2px solid #1d1d1b; outline-offset: 2px; }
     .hint { display: block; color: #6b6760; font-size: 11px; }
 
-    /* Créneaux */
-    .slot { display: flex; align-items: center; font-size: 13px; margin: 0 0 8px; }
-    .slot input {
-      margin-left: auto;
-      padding: 6px 8px;
-      border: 1px solid #ccc6bb;
-      border-radius: 8px;
-      background: #fff;
-      font: inherit;
-      font-size: 13px;
-    }
+    /* Boutons du calendrier */
     button {
       display: block;
       width: 100%;
       margin-top: 8px;
       padding: 8px;
       border: 1px solid #1d1d1b;
-      border-radius: 999px;
+      border-radius: 8px;
       background: transparent;
       color: #1d1d1b;
       font: inherit;
@@ -51,35 +41,20 @@
       cursor: pointer;
     }
     button:hover { background: #1d1d1b; color: #f4f2ee; }
-    /* Bouton « × » pour retirer un créneau */
-    button.remove {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      width: 26px;
-      height: 26px;
-      margin: 0 0 0 6px;
-      padding: 0;
+    /* « Paramétrer mon calendrier » : simple lien */
+    button.link {
+      margin-top: 6px;
       border: 0;
+      background: transparent;
       color: #6b6760;
-      font-size: 18px;
-      line-height: 1;
+      text-decoration: underline;
+      text-underline-offset: 2px;
     }
-    button.remove:hover { background: #ebe7e0; color: #c62828; }
-    button.remove:disabled { visibility: hidden; }
-    /* « + Ajouter un créneau » : discret, en pointillés */
-    #add-slot {
-      margin-top: 0;
-      border: 1px dashed #aaa59c;
-      color: #6b6760;
-    }
-    #add-slot:hover { border-style: solid; background: transparent; color: #1d1d1b; }
-    #saved { font-size: 11px; color: #3a7d44; margin: 6px 0 0; min-height: 14px; }
+    button.link:hover { background: transparent; color: #1d1d1b; }
   </style>
 </head>
 <body>
-  <h1>Quiet Substack</h1>
+  <h1>Quiet for Substack</h1>
 
   <label class="switch"><span data-i18n="hideFeed"></span>
     <input id="enabled" type="checkbox" checked>
@@ -89,13 +64,9 @@
 
   <hr>
 
-  <h2 data-i18n="slotsTitle"></h2>
-  <p data-i18n="slotsHelp"></p>
-  <div id="slots"></div>
-  <button id="add-slot" type="button" data-i18n="addSlot"></button>
+  <h2 data-i18n="calendarTitle"></h2>
   <button id="open-calendar" type="button" data-i18n="openCalendarButton"></button>
-
-  <p id="saved"></p>
+  <button id="setup-calendar" type="button" class="link" data-i18n="setupCalendar"></button>
   <script src="i18n.js"></script>
   <script src="popup.js"></script>
 </body>

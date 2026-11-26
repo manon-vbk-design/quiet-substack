@@ -3,12 +3,13 @@
 (() => {
 // Un interrupteur en haut à gauche, à côté du logo Substack, masque ou
 // affiche le fil d'accueil. Tout le reste du site reste accessible.
-// Des raccourcis sont ajoutés dans la barre latérale (écrire une note,
-// calendrier, posts enregistrés, puis chacune de tes publications).
+// Des raccourcis sont ajoutés dans la barre latérale (calendrier, posts
+// enregistrés, puis chacune de tes publications). À la place du fil, la barre
+// « Qu'avez-vous en tête ? » de Substack ouvre l'éditeur de note.
 
 // Réglages : l'interrupteur (partagé avec le popup) et ton prénom,
 // lu sur ton profil Substack (premier mot de ton nom).
-const settings = { prenom: "", enabled: true };
+const settings = { prenom: "", photo: "", enabled: true };
 
 function greeting() {
   return settings.prenom ? t("greeting", { name: settings.prenom }) : t("greetingNoName");
@@ -23,7 +24,6 @@ function isFeedPage() {
 
 // Icônes (tracés SVG 24×24, style trait).
 const ICONS = {
-  pen: '<path d="M16.5 3.5l4 4L8 20H4v-4z"/><path d="M14 6l4 4"/>',
   calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
   saved: '<path d="M6 3h12v18l-6-4.5L6 21z"/>',
   posts: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
@@ -40,7 +40,6 @@ const CREATE_BUTTON = 'button[aria-label="Créer"], button[aria-label="Create"]'
 
 // Raccourcis ajoutés à la fin de la liste, juste au-dessus du bouton « Créer ».
 const SHORTCUTS = [
-  { id: "write", label: t("writeNote"), icon: "pen" },
   { id: "calendar", label: t("calendar"), icon: "calendar", href: "https://substack.com/home#calendrier" },
   { id: "saved", label: t("savedPosts"), icon: "saved", href: "https://substack.com/saved" },
 ];
@@ -55,8 +54,10 @@ async function loadPublications() {
   try {
     const profile = await fetch("/api/v1/user/profile/self", { credentials: "include" }).then((r) => r.json());
     settings.prenom = (profile.name || "").trim().split(/\s+/)[0];
+    settings.photo = profile.photo_url || "";
     const quote = overlay?.querySelector(".nfe-quote");
     if (quote) quote.textContent = greeting();
+    if (overlay) setAvatar(overlay);
     const primaryId = profile.primaryPublication?.id;
     const primary = profile.primaryPublication?.subdomain;
     myPosts = primary
@@ -143,13 +144,6 @@ function buildShortcut({ id, label, icon, href, logo }, model) {
         location.hash = "calendrier";
       }, true);
     }
-  } else if (id === "write") {
-    a.href = "#";
-    a.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      openComposer();
-    }, true);
   }
   return item;
 }
@@ -217,7 +211,7 @@ function resetShortcuts() {
 
 // ---------- Éditeur de note ----------
 
-// « Écrire une note » ouvre l'éditeur de Substack. Tant qu'il est ouvert,
+// La barre « Qu'avez-vous en tête ? » ouvre l'éditeur de Substack. Tant qu'il est ouvert,
 // le panneau s'efface et le fil reste caché derrière. La mise en page de
 // l'éditeur (Post gallery à côté) est gérée par notes.js.
 const COMPOSER_BUTTON = 'button[aria-label="Nouveau post"], button[aria-label="New post"]';
@@ -251,19 +245,27 @@ function buildOverlay() {
   el.innerHTML = `
     <div class="nfe-card">
       <p class="nfe-quote"></p>
-      <a href="#" class="nfe-write">
-        <svg class="nfe-icon" viewBox="0 0 24 24" aria-hidden="true">${ICONS.pen}</svg>
-        <span class="nfe-write-text"></span>
-      </a>
+      <button type="button" class="nfe-compose">
+        <span class="nfe-avatar"></span>
+        <span class="nfe-compose-text"></span>
+      </button>
     </div>
   `;
   el.querySelector(".nfe-quote").textContent = greeting();
-  el.querySelector(".nfe-write-text").textContent = t("writeOrSchedule");
-  el.querySelector(".nfe-write").addEventListener("click", (e) => {
-    e.preventDefault();
-    openComposer();
-  });
+  el.querySelector(".nfe-compose-text").textContent = t("whatsOnYourMind");
+  el.querySelector(".nfe-compose").addEventListener("click", openComposer);
+  setAvatar(el);
   return el;
+}
+
+// Ta photo de profil à gauche de la barre, comme chez Substack.
+function setAvatar(el) {
+  const avatar = el.querySelector(".nfe-avatar");
+  if (!avatar || !settings.photo || avatar.querySelector("img")) return;
+  const img = document.createElement("img");
+  img.src = settings.photo;
+  img.alt = "";
+  avatar.appendChild(img);
 }
 
 // Le panneau commence au bord droit de la barre latérale.

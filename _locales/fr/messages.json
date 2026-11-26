@@ -1,4 +1,4 @@
 {
-  "extName": { "message": "Quiet Substack" },
-  "extDescription": { "message": "Masque le fil d'accueil de Substack, ajoute des raccourcis dans la barre latérale, écris tes notes avec Post gallery et tes créneaux quotidiens, et organise-les dans un calendrier sur 15 jours." }
+  "extName": { "message": "Quiet for Substack" },
+  "extDescription": { "message": "Masque le fil de Substack et écris tes notes au calme : créneaux, meilleures heures, calendrier, citations." }
 }
